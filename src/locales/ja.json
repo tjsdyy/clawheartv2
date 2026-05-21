@@ -1,0 +1,12 @@
+{
+  "app": { "name": "ClawHeart", "tagline": "ローカル AI セキュリティランタイム", "protected": "保護中", "paused": "一時停止", "kill_switch_active": "緊急停止が有効" },
+  "nav": { "home": "ホーム", "agents": "エージェント", "settings": "設定", "kill_switch": "緊急停止", "command_palette": "コマンドパレット", "theme": "テーマ" },
+  "tools": { "monitor": "監視", "scan": "スキャン", "skills": "スキルマーケット", "advisory": "セキュリティ告知", "logs": "リクエストログ", "budget": "予算", "audit": "監査レポート", "openclaw": "OpenClaw 統合", "agents": "エージェント管理", "settings": "設定", "token_verify": "トークン検証", "relay": "リレー", "policy": "企業ポリシー", "more": "その他" },
+  "onboarding": { "welcome": "ClawHeart へようこそ", "description": "まずローカルの AI エージェントを発見し、ツールボックスを有効化します。", "details": "Claude Code、Codex、Cursor、Gemini CLI、Windsurf、OpenClaw と MCP 設定をスキャンします。", "start_discover": "発見を開始", "scanning": "スキャン中…", "skip": "スキップ · デモモード" },
+  "monitor": { "tab_live": "ライブストリーム", "tab_intercept": "傍受記録", "tab_tokens": "トークン使用量", "tab_budget": "予算", "filter_severity": "深刻度", "filter_type": "イベント種別", "filter_agent": "エージェント", "header_time": "時刻", "header_agent": "エージェント", "header_endpoint": "エンドポイント", "header_status": "応答", "detail_chain_hit": "MCP 攻撃チェーン検出", "tool_sequence": "ツール呼び出しシーケンス", "mitre_attack": "MITRE ATT&CK", "allow_sequence": "このシーケンスを許可", "permanently_block": "永久ブロック", "redacted_copy": "編集済みID をコピー" },
+  "scan": { "title": "ローカル AI セキュリティスキャン", "subtitle": "80 項目決定的検査 · LLM 非依存 · 平均 30 秒", "select_items": "スキャン項目を選択", "selected": "{{n}} / {{total}} 項目選択 · 計 {{checks}} チェック", "start": "スキャン開始", "duration_hint": "≈30s", "history": "履歴", "view": "表示", "view_all": "すべて表示" },
+  "skills": { "tab_all": "すべて", "tab_installed": "インストール済み", "tab_recommended": "おすすめ", "tab_safe": "安全", "tab_latest": "最新", "status_safe": "安全", "status_warn": "警告", "status_disabled": "無効", "status_unaudited": "未監査", "install": "インストール", "installed": "インストール済み", "details": "詳細", "view_why": "理由を見る" },
+  "common": { "back": "戻る", "pause": "一時停止", "search": "検索", "export": "エクスポート", "save": "保存", "cancel": "キャンセル", "delete": "削除", "confirm": "確認", "no_results": "該当なし", "loading": "読み込み中…" },
+  "kbd": { "navigate": "↑↓ 選択", "execute": "↵ 実行", "close": "esc 閉じる" },
+  "tray": { "recent_events": "最近のイベント", "pause_5min": "保護を 5 分間停止", "kill_switch": "緊急停止", "open_main": "メインを開く", "quit": "終了" }
+}

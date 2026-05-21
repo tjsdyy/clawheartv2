@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>ClawHeart Hero · A+C v2 · 流水线 + 6 层 + 7 产物</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0B0E11;
+    color: #E6E9EE;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "PingFang SC", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px;
+  }
+  .frame-label {
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: #8B92A0;
+    margin-bottom: 8px;
+    font-family: "JetBrains Mono", monospace;
+  }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .subtitle { color: #8B92A0; font-size: 14px; margin-bottom: 32px; }
+
+  .hero {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    height: 460px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #1A1D21 0%, #111315 100%);
+    border: 1px solid #252629;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 24px 64px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+    opacity: 0.6;
+  }
+  .glow-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 360px; height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34,197,94,0.18) 0%, transparent 70%);
+    animation: pulse-glow-bg 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes pulse-glow-bg {
+    0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+  }
+  @keyframes float-slow {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-8px); }
+  }
+  @keyframes float-slower {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-5px); }
+  }
+  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes spin-slow-reverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+  @keyframes pulse-glow-ring {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+    70% { box-shadow: 0 0 0 22px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+  @keyframes dash-flow { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+  @keyframes pill-blink {
+    0%, 100% { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.4); }
+    50% { background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.7); }
+  }
+  @keyframes pill-blink-result {
+    0%, 100% { background: rgba(34,197,94,0.15); transform: scale(1); }
+    50% { background: rgba(34,197,94,0.28); transform: scale(1.04); }
+  }
+  .path-line { stroke-dasharray: 6 6; animation: dash-flow 1s linear infinite; }
+  .node { position: absolute; z-index: 10; transform: translate(-50%, -50%); }
+  .node-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: #22252A;
+    border: 1px solid #31353B;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 10;
+  }
+  .node-label {
+    margin-top: 6px;
+    text-align: center;
+    font-size: 10.5px;
+    color: #8B92A0;
+    font-family: "JetBrains Mono", monospace;
+    white-space: nowrap;
+  }
+
+  /* === Center cluster: core + 6 defense layers === */
+  .core-cluster {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 240px; height: 240px;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+  }
+  .defense-orbit {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px dashed rgba(34,197,94,0.25);
+    animation: spin-slow 60s linear infinite;
+  }
+  .defense-orbit-2 {
+    position: absolute;
+    inset: 20px;
+    border-radius: 50%;
+    border: 1px dotted rgba(255,255,255,0.08);
+    animation: spin-slow-reverse 90s linear infinite;
+  }
+  .layer-chip {
+    position: absolute;
+    top: 50%; left: 50%;
+    padding: 4px 9px;
+    background: rgba(20,24,29,0.92);
+    border: 1px solid rgba(34,197,94,0.4);
+    border-radius: 12px;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #4ADE80;
+    font-family: "JetBrains Mono", monospace;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    animation: spin-slow-reverse 60s linear infinite;
+  }
+  .layer-chip .num { color: #22C55E; margin-right: 4px; font-weight: 700; }
+
+  .core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 25;
+    width: 120px; height: 120px;
+    background: linear-gradient(135deg, #22252A, #1A1D21);
+    border: 2px solid #22C55E;
+    border-radius: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 16px 48px rgba(34,197,94,0.3);
+    animation: pulse-glow-ring 2.4s infinite;
+  }
+  .core-badge {
+    position: absolute;
+    top: -10px;
+    background: #22C55E;
+    color: #0B0E11;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(34,197,94,0.4);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .core-icon {
+    width: 42px; height: 42px;
+    color: #22C55E;
+    animation: spin-slow 14s linear infinite;
+  }
+  .core-name { font-size: 12px; font-weight: 600; color: #E6E9EE; margin-top: 4px; }
+  .core-role { font-size: 9px; color: #8B92A0; font-family: "JetBrains Mono", monospace; margin-top: 2px; }
+
+  /* === Right side: 7 stream-pills === */
+  .output-stack {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 15;
+    width: 160px;
+  }
+  .stream-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(34,197,94,0.06);
+    border: 1px solid rgba(34,197,94,0.4);
+    border-radius: 18px;
+    font-size: 11.5px;
+    color: #E6E9EE;
+    font-family: "JetBrains Mono", monospace;
+    backdrop-filter: blur(6px);
+    animation: pill-blink 3s ease-in-out infinite;
+  }
+  .stream-pill .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #22C55E;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px rgba(34,197,94,0.6);
+  }
+  .stream-pill .label { flex: 1; font-size: 11px; }
+  .stream-pill .layer-num {
+    font-size: 9px;
+    color: #4ADE80;
+    background: rgba(34,197,94,0.12);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  .stream-pill.result {
+    background: rgba(34,197,94,0.15);
+    border: 1.5px solid #22C55E;
+    color: #4ADE80;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 14px;
+    margin-top: 4px;
+    animation: pill-blink-result 2s ease-in-out infinite;
+    box-shadow: 0 4px 16px rgba(34,197,94,0.2);
+  }
+  .stream-pill.result .check {
+    width: 16px; height: 16px;
+    color: #22C55E;
+  }
+
+  /* Animation delays — staggered light-up */
+  .stream-pill:nth-child(1) { animation-delay: 0.0s; }
+  .stream-pill:nth-child(2) { animation-delay: 0.4s; }
+  .stream-pill:nth-child(3) { animation-delay: 0.8s; }
+  .stream-pill:nth-child(4) { animation-delay: 1.2s; }
+  .stream-pill:nth-child(5) { animation-delay: 1.6s; }
+  .stream-pill:nth-child(6) { animation-delay: 2.0s; }
+  .stream-pill:nth-child(7) { animation-delay: 2.4s; }
+
+  /* Tools belt */
+  .tools-belt {
+    width: 100%;
+    max-width: 1100px;
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    gap: 8px;
+  }
+  .tool-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 4px;
+    border-radius: 12px;
+    background: #14181D;
+    border: 1px solid #252629;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .tool-pill:hover {
+    border-color: var(--tc);
+    background: #1C2128;
+    transform: translateY(-2px);
+  }
+  .tool-pill-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--tc) 14%, transparent);
+    color: var(--tc);
+  }
+  .tool-pill-label {
+    font-size: 10px;
+    color: #8B92A0;
+    text-align: center;
+    line-height: 1.2;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .soon { opacity: 0.35; }
+
+  .demo-note {
+    margin-top: 32px;
+    max-width: 1100px;
+    width: 100%;
+    font-size: 12.5px;
+    color: #8B92A0;
+    line-height: 1.7;
+    padding: 16px 20px;
+    background: #14181D;
+    border: 1px solid #252629;
+    border-radius: 12px;
+  }
+  .demo-note strong { color: #E6E9EE; font-weight: 500; }
+  .demo-note .accent { color: #22C55E; }
+  .demo-note kbd {
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.25);
+    color: #4ADE80;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="frame-label">A + C v2 · 流水线 + 6 防御层 + 7 安全产物</div>
+<h1>AI 流量 → ClawHeart 6 层防御 → 7 项产物 ✓ 放行</h1>
+<p class="subtitle">左 6 Agent 流入 · 中心 6 层环绕 · 右 6 检查标签 + 1 最终放行</p>
+
+<div class="hero">
+  <div class="grid-bg"></div>
+  <div class="glow-center"></div>
+
+  <!-- SVG flow lines -->
+  <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index: 5;" viewBox="0 0 1100 460" preserveAspectRatio="none">
+    <defs>
+      <!-- Input: 6 agents → cluster center (~480, 230) -->
+      <path id="in-1" d="M 130 70  C 280 70,  340 220, 380 230"/>
+      <path id="in-2" d="M 80 140 C 240 140, 320 220, 380 230"/>
+      <path id="in-3" d="M 80 320 C 240 320, 320 240, 380 230"/>
+      <path id="in-4" d="M 130 390 C 280 390, 340 240, 380 230"/>
+      <path id="in-5" d="M 80 230 C 220 230, 340 230, 380 230"/>
+      <path id="in-6" d="M 200 100 C 320 110, 360 220, 380 230"/>
+      <!-- Output: cluster (~620, 230) → 7 pills (right side, x~880) -->
+      <path id="out-1" d="M 620 230 C 750 230, 800 60,  870 60"/>
+      <path id="out-2" d="M 620 230 C 750 230, 820 115, 870 115"/>
+      <path id="out-3" d="M 620 230 C 750 230, 830 170, 870 170"/>
+      <path id="out-4" d="M 620 230 C 750 230, 830 230, 870 230"/>
+      <path id="out-5" d="M 620 230 C 750 230, 830 290, 870 290"/>
+      <path id="out-6" d="M 620 230 C 750 230, 820 345, 870 345"/>
+      <path id="out-7" d="M 620 230 C 750 230, 800 400, 870 400"/>
+    </defs>
+    <!-- Input lines -->
+    <g stroke="#3F4248" stroke-width="1.5" fill="none" class="path-line" opacity="0.55">
+      <use href="#in-1"/><use href="#in-2"/><use href="#in-3"/>
+      <use href="#in-4"/><use href="#in-5"/><use href="#in-6"/>
+    </g>
+    <!-- Output lines -->
+    <g stroke="#22C55E" stroke-width="1.5" fill="none" class="path-line" opacity="0.7">
+      <use href="#out-1"/><use href="#out-2"/><use href="#out-3"/>
+      <use href="#out-4"/><use href="#out-5"/><use href="#out-6"/><use href="#out-7"/>
+    </g>
+    <!-- Input particles (各 Agent 自己的色) -->
+    <g><circle r="5" fill="#F97316" opacity="0.4"/><circle r="2.5" fill="#F97316"/>
+      <animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#in-1"/></animateMotion></g>
+    <g><circle r="5" fill="#A855F7" opacity="0.4"/><circle r="2.5" fill="#A855F7"/>
+      <animateMotion dur="3.0s" repeatCount="indefinite"><mpath href="#in-2"/></animateMotion></g>
+    <g><circle r="5" fill="#06B6D4" opacity="0.4"/><circle r="2.5" fill="#06B6D4"/>
+      <animateMotion dur="2.8s" repeatCount="indefinite"><mpath href="#in-3"/></animateMotion></g>
+    <g><circle r="5" fill="#3B82F6" opacity="0.4"/><circle r="2.5" fill="#3B82F6"/>
+      <animateMotion dur="3.2s" repeatCount="indefinite"><mpath href="#in-4"/></animateMotion></g>
+    <g><circle r="5" fill="#EC4899" opacity="0.4"/><circle r="2.5" fill="#EC4899"/>
+      <animateMotion dur="2.5s" repeatCount="indefinite"><mpath href="#in-5"/></animateMotion></g>
+    <g><circle r="5" fill="#4F46E5" opacity="0.4"/><circle r="2.5" fill="#4F46E5"/>
+      <animateMotion dur="2.9s" repeatCount="indefinite"><mpath href="#in-6"/></animateMotion></g>
+    <!-- Output particles (7 条，全绿) -->
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="2.0s" repeatCount="indefinite"><mpath href="#out-1"/></animateMotion></g>
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="2.2s" repeatCount="indefinite"><mpath href="#out-2"/></animateMotion></g>
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="2.1s" repeatCount="indefinite"><mpath href="#out-3"/></animateMotion></g>
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="1.9s" repeatCount="indefinite"><mpath href="#out-4"/></animateMotion></g>
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="2.3s" repeatCount="indefinite"><mpath href="#out-5"/></animateMotion></g>
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="2.0s" repeatCount="indefinite"><mpath href="#out-6"/></animateMotion></g>
+    <g><circle r="6" fill="#22C55E" opacity="0.5"/><circle r="3" fill="#22C55E"/>
+      <animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#out-7"/></animateMotion></g>
+  </svg>
+
+  <!-- Left: 6 AI Agents -->
+  <div class="node" style="left:12%; top:15%; animation: float-slow 4s ease-in-out infinite;">
+    <div class="node-icon" style="color:#F97316;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 4l8 14H4L12 6z"/></svg>
+    </div>
+    <div class="node-label">Claude</div>
+  </div>
+  <div class="node" style="left:8%; top:30%; animation: float-slower 5s ease-in-out infinite;">
+    <div class="node-icon" style="color:#A855F7;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+    </div>
+    <div class="node-label">Codex</div>
+  </div>
+  <div class="node" style="left:8%; top:70%; animation: float-slow 4.5s ease-in-out infinite;">
+    <div class="node-icon" style="color:#06B6D4;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h10v2H4v-2z"/></svg>
+    </div>
+    <div class="node-label">Cursor</div>
+  </div>
+  <div class="node" style="left:12%; top:86%; animation: float-slower 6s ease-in-out infinite;">
+    <div class="node-icon" style="color:#3B82F6;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1l9 4v6c0 5-3.8 9.7-9 11-5.2-1.3-9-6-9-11V5l9-4z"/></svg>
+    </div>
+    <div class="node-label">Gemini</div>
+  </div>
+  <div class="node" style="left:6%; top:50%; animation: float-slow 5.5s ease-in-out infinite;">
+    <div class="node-icon" style="color:#EC4899;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+    </div>
+    <div class="node-label">Windsurf</div>
+  </div>
+  <div class="node" style="left:18%; top:22%; animation: float-slower 4.8s ease-in-out infinite;">
+    <div class="node-icon" style="color:#4F46E5;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 14l-5-5h3V8h4v4h3l-5 5z"/></svg>
+    </div>
+    <div class="node-label">OpenClaw</div>
+  </div>
+
+  <!-- Center cluster -->
+  <div class="core-cluster">
+    <div class="defense-orbit"></div>
+    <div class="defense-orbit-2"></div>
+
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(110px, 0);">
+      <span class="num">L0</span>协议归一化
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(55px, -95px);">
+      <span class="num">L1</span>网络代理
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(-55px, -95px);">
+      <span class="num">L2</span>内容 DLP
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(-110px, 0);">
+      <span class="num">L3</span>MCP 深度
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(-55px, 95px);">
+      <span class="num">L4</span>供应链
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(55px, 95px);">
+      <span class="num">L7</span>失败关闭
+    </div>
+
+    <div class="core">
+      <span class="core-badge">● 防护中</span>
+      <svg class="core-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2 L3 6 L3 11 C3 17 7 21 12 22 C17 21 21 17 21 11 L21 6 Z"/>
+        <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="core-name">ClawHeart</div>
+      <div class="core-role">8 层防御</div>
+    </div>
+  </div>
+
+  <!-- Right: 7 stream-pills (6 检查 + 1 结果) -->
+  <div class="output-stack">
+    <div class="stream-pill">
+      <span class="layer-num">L0</span>
+      <span class="dot"></span>
+      <span class="label">已归一化</span>
+    </div>
+    <div class="stream-pill">
+      <span class="layer-num">L2</span>
+      <span class="dot"></span>
+      <span class="label">已脱敏</span>
+    </div>
+    <div class="stream-pill">
+      <span class="layer-num">L3</span>
+      <span class="dot"></span>
+      <span class="label">已查链</span>
+    </div>
+    <div class="stream-pill">
+      <span class="layer-num">L4</span>
+      <span class="dot"></span>
+      <span class="label">已校签</span>
+    </div>
+    <div class="stream-pill">
+      <span class="layer-num">L6</span>
+      <span class="dot"></span>
+      <span class="label">已记账</span>
+    </div>
+    <div class="stream-pill">
+      <span class="layer-num">L7</span>
+      <span class="dot"></span>
+      <span class="label">已限速</span>
+    </div>
+    <div class="stream-pill result">
+      <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <span class="label">放行</span>
+    </div>
+  </div>
+</div>
+
+<!-- Tools belt: 11 entries -->
+<div class="tools-belt">
+  <div class="tool-pill" style="--tc:#2563EB"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="tool-pill-label">监控</div></div>
+  <div class="tool-pill" style="--tc:#EA580C"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div><div class="tool-pill-label">扫描</div></div>
+  <div class="tool-pill" style="--tc:#9333EA"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div><div class="tool-pill-label">技能</div></div>
+  <div class="tool-pill" style="--tc:#DC2626"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="tool-pill-label">公告</div></div>
+  <div class="tool-pill" style="--tc:#0891B2"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="tool-pill-label">日志</div></div>
+  <div class="tool-pill" style="--tc:#16A34A"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div><div class="tool-pill-label">预算</div></div>
+  <div class="tool-pill" style="--tc:#71717A"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="tool-pill-label">审计</div></div>
+  <div class="tool-pill soon" style="--tc:#EAB308"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div><div class="tool-pill-label">Token</div></div>
+  <div class="tool-pill" style="--tc:#4F46E5"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div><div class="tool-pill-label">OpenClaw</div></div>
+  <div class="tool-pill soon" style="--tc:#EC4899"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.93 4.93a10 10 0 0 1 14.14 0M1 1l22 22M16.72 11.06a4.94 4.94 0 0 0-3-3M5 12.55a11 11 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9"/></svg></div><div class="tool-pill-label">中转</div></div>
+  <div class="tool-pill soon" style="--tc:#64748B"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="tool-pill-label">策略</div></div>
+</div>
+
+<div class="demo-note">
+  <strong>右侧 7 个标签</strong>：6 个安全检查标签 + 1 个最终"放行"结果。每个标签标注对应防御层 ID：<br>
+  <kbd>L0</kbd> 已归一化 · <kbd>L2</kbd> 已脱敏 · <kbd>L3</kbd> 已查链（MCP）· <kbd>L4</kbd> 已校签（供应链）· <kbd>L6</kbd> 已记账（usage）· <kbd>L7</kbd> 已限速（KS） → <span class="accent">✓ 放行</span><br>
+  <strong>动效</strong>：7 个 pill 错峰 pulse（0.4s 间隔依次亮起，3s 一轮），暗示"流量依次穿过 6 层 → 最终放行"；最后"放行"pill 更亮 + 持续脉冲。
+  <strong>语义</strong>：每条 stream-pill 对应一个真实落库的检查产物 — pill 亮起时可点击进入对应工具（监控 / 公告 / 预算 / 日志）。
+</div>
+
+</body>
+</html>

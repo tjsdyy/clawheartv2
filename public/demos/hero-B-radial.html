@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>ClawHeart Hero · 方案 B · 星形辐射</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0B0E11;
+    color: #E6E9EE;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "PingFang SC", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px;
+  }
+  .frame-label { font-size: 12px; letter-spacing: 0.5px; color: #8B92A0; margin-bottom: 8px; font-family: "JetBrains Mono", monospace; }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .subtitle { color: #8B92A0; font-size: 14px; margin-bottom: 32px; }
+
+  .hero {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    height: 600px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #1A1D21 0%, #111315 100%);
+    border: 1px solid #252629;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 24px 64px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.6;
+  }
+  .glow-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 360px; height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%);
+    animation: pulse-bg 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Rings around core (8 防御层) */
+  .ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    border: 1px dashed rgba(255,255,255,0.08);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: spin-slow linear infinite;
+  }
+  .ring-1 { width: 180px; height: 180px; animation-duration: 30s; border-color: rgba(34,197,94,0.2); }
+  .ring-2 { width: 280px; height: 280px; animation-duration: 50s; animation-direction: reverse; border-color: rgba(34,197,94,0.12); }
+  .ring-3 { width: 420px; height: 420px; animation-duration: 80s; border-color: rgba(255,255,255,0.05); }
+
+  @keyframes spin-slow { from { transform: translate(-50%, -50%) rotate(0); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+  @keyframes pulse-bg { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+  @keyframes pulse-glow-ring {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+    70% { box-shadow: 0 0 0 22px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+  @keyframes orbit { from { transform: translate(-50%, -50%) rotate(0) translateX(var(--r)) rotate(0); } to { transform: translate(-50%, -50%) rotate(360deg) translateX(var(--r)) rotate(-360deg); } }
+  @keyframes float-soft { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+  /* Core */
+  .core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 30;
+    width: 140px; height: 140px;
+    background: #14181D;
+    border: 2px solid #22C55E;
+    border-radius: 28px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    box-shadow: 0 16px 48px rgba(34,197,94,0.3);
+    animation: pulse-glow-ring 2.4s infinite;
+  }
+  .core-icon {
+    width: 48px; height: 48px;
+    color: #22C55E;
+    margin-bottom: 6px;
+    animation: spin-slow 12s linear infinite;
+  }
+  .core-name { font-size: 13px; font-weight: 600; }
+  .core-badge {
+    margin-top: 4px;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.6px; text-transform: uppercase;
+    color: #22C55E;
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  /* 8 层防御 labels — 中圈 */
+  .layer-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    padding: 3px 8px;
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.25);
+    border-radius: 12px;
+    font-size: 9.5px;
+    color: #4ADE80;
+    font-family: "JetBrains Mono", monospace;
+    white-space: nowrap;
+    z-index: 15;
+    backdrop-filter: blur(4px);
+  }
+
+  /* 工具入口 — 外圈 11 个 */
+  .tool {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: #22252A;
+    border: 1px solid #31353B;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .tool:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    border-color: var(--tc);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--tc) 30%, transparent);
+  }
+  .tool-icon { color: var(--tc); }
+  .tool-label {
+    position: absolute;
+    top: calc(100% + 4px); left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #8B92A0;
+    white-space: nowrap;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .tool.soon { opacity: 0.4; }
+
+  /* AI Agent — 最外圈漂浮 */
+  .agent {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: #14181D;
+    border: 1px solid #252629;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 12;
+    animation: float-soft 4s ease-in-out infinite;
+  }
+
+  /* Connector lines — 中心向外 */
+  .connector {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  @keyframes dash-flow { from { stroke-dashoffset: 30; } to { stroke-dashoffset: 0; } }
+  .connector line, .connector path {
+    stroke-dasharray: 4 6;
+    animation: dash-flow 2s linear infinite;
+  }
+
+  .demo-note {
+    margin-top: 32px;
+    max-width: 900px; width: 100%;
+    font-size: 12.5px;
+    color: #8B92A0;
+    line-height: 1.7;
+    padding: 16px 20px;
+    background: #14181D;
+    border: 1px solid #252629;
+    border-radius: 12px;
+  }
+  .demo-note strong { color: #E6E9EE; font-weight: 500; }
+  .demo-note .accent { color: #22C55E; }
+</style>
+</head>
+<body>
+
+<div class="frame-label">方案 B · 星形辐射 (Hub & Spoke)</div>
+<h1>ClawHeart 居中 · 工具入口环绕 · Agent 外围浮动</h1>
+<p class="subtitle">最适合"工具箱"心智 — 中心 + 三层同心圆（防御层 / 工具入口 / Agent）</p>
+
+<div class="hero">
+  <div class="grid-bg"></div>
+  <div class="glow-center"></div>
+
+  <!-- 3 ring 装饰 -->
+  <div class="ring ring-1"></div>
+  <div class="ring ring-2"></div>
+  <div class="ring ring-3"></div>
+
+  <!-- Connectors (lines from core to each tool, fade) -->
+  <svg class="connector" viewBox="0 0 900 600">
+    <g stroke="#22C55E" stroke-width="1" fill="none" opacity="0.25">
+      <!-- 11 outer-ring 半径 ~200，11 个角度 -->
+      <line x1="450" y1="300" x2="650" y2="300"/>
+      <line x1="450" y1="300" x2="619" y2="195"/>
+      <line x1="450" y1="300" x2="555" y2="118"/>
+      <line x1="450" y1="300" x2="389" y2="109"/>
+      <line x1="450" y1="300" x2="251" y2="195"/>
+      <line x1="450" y1="300" x2="251" y2="405"/>
+      <line x1="450" y1="300" x2="389" y2="491"/>
+      <line x1="450" y1="300" x2="555" y2="482"/>
+      <line x1="450" y1="300" x2="619" y2="405"/>
+      <line x1="450" y1="300" x2="700" y2="240"/>
+      <line x1="450" y1="300" x2="700" y2="360"/>
+    </g>
+  </svg>
+
+  <!-- Layer labels: 8 防御层 in middle ring -->
+  <div class="layer-label" style="transform: translate(-50%, -50%) translate(108px, -27px);">L0 归一化</div>
+  <div class="layer-label" style="transform: translate(-50%, -50%) translate(96px, -67px);">L1 网络</div>
+  <div class="layer-label" style="transform: translate(-50%, -50%) translate(43px, -103px);">L2 内容</div>
+  <div class="layer-label" style="transform: translate(-50%, -50%) translate(-43px, -103px);">L3 MCP</div>
+  <div class="layer-label" style="transform: translate(-50%, -50%) translate(-108px, -27px);">L4 供应链</div>
+  <div class="layer-label" style="transform: translate(-50%, -50%) translate(-43px, 103px);">L5 系统</div>
+  <div class="layer-label" style="transform: translate(-50%, -50%) translate(43px, 103px);">L6 数据</div>
+  <div class="layer-label" style="transform: translate(-50%, -50%) translate(108px, 27px);">L7 应急</div>
+
+  <!-- Outer ring: 11 tools -->
+  <!-- 11 个角度均匀分布在 360°：每隔 ~32.7° -->
+  <div class="tool" style="--tc:#2563EB; transform: translate(-50%, -50%) translate(200px, 0);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span class="tool-label">监控</span>
+  </div>
+  <div class="tool" style="--tc:#EA580C; transform: translate(-50%, -50%) translate(169px, -106px);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span class="tool-label">扫描</span>
+  </div>
+  <div class="tool" style="--tc:#9333EA; transform: translate(-50%, -50%) translate(105px, -181px);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    <span class="tool-label">技能</span>
+  </div>
+  <div class="tool" style="--tc:#DC2626; transform: translate(-50%, -50%) translate(-61px, -191px);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span class="tool-label">公告</span>
+  </div>
+  <div class="tool" style="--tc:#0891B2; transform: translate(-50%, -50%) translate(-169px, -106px);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span class="tool-label">日志</span>
+  </div>
+  <div class="tool" style="--tc:#16A34A; transform: translate(-50%, -50%) translate(-200px, 0);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
+    <span class="tool-label">预算</span>
+  </div>
+  <div class="tool" style="--tc:#71717A; transform: translate(-50%, -50%) translate(-169px, 106px);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="tool-label">审计</span>
+  </div>
+  <div class="tool soon" style="--tc:#EAB308; transform: translate(-50%, -50%) translate(-61px, 191px);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+    <span class="tool-label">Token</span>
+  </div>
+  <div class="tool" style="--tc:#4F46E5; transform: translate(-50%, -50%) translate(105px, 181px);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+    <span class="tool-label">OpenClaw</span>
+  </div>
+  <div class="tool soon" style="--tc:#EC4899; transform: translate(-50%, -50%) translate(169px, 106px);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.93 4.93a10 10 0 0 1 14.14 0M1 1l22 22M16.72 11.06a4.94 4.94 0 0 0-3-3M5 12.55a11 11 0 0 1 5.17-2.39"/></svg>
+    <span class="tool-label">中转</span>
+  </div>
+  <div class="tool soon" style="--tc:#64748B; transform: translate(-50%, -50%) translate(196px, 41px);">
+    <svg class="tool-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <span class="tool-label">策略</span>
+  </div>
+
+  <!-- Agent icons floating outside outer ring -->
+  <div class="agent" style="transform: translate(-50%, -50%) translate(280px, -55px); color:#F97316;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2z"/></svg>
+  </div>
+  <div class="agent" style="transform: translate(-50%, -50%) translate(195px, -210px); color:#A855F7; animation-delay: 0.5s;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg>
+  </div>
+  <div class="agent" style="transform: translate(-50%, -50%) translate(-50px, -270px); color:#06B6D4; animation-delay: 1s;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h10v2H4z"/></svg>
+  </div>
+  <div class="agent" style="transform: translate(-50%, -50%) translate(-260px, -130px); color:#3B82F6; animation-delay: 1.5s;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1l9 4v6c0 5-3.8 9.7-9 11-5.2-1.3-9-6-9-11V5l9-4z"/></svg>
+  </div>
+  <div class="agent" style="transform: translate(-50%, -50%) translate(-260px, 130px); color:#EC4899; animation-delay: 2s;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/></svg>
+  </div>
+  <div class="agent" style="transform: translate(-50%, -50%) translate(-50px, 270px); color:#4F46E5; animation-delay: 2.5s;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+  </div>
+
+  <!-- Center core -->
+  <div class="core">
+    <svg class="core-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2 L3 6 L3 11 C3 17 7 21 12 22 C17 21 21 17 21 11 L21 6 Z"/>
+      <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="core-name">ClawHeart</div>
+    <div class="core-badge">● 防护中</div>
+  </div>
+</div>
+
+<div class="demo-note">
+  <strong>方案 B 核心心智</strong>：中心 <span class="accent">ClawHeart 核心</span> 是绝对主角，向外辐射三层：
+  <strong>内圈</strong>（8 层防御层标签，绿色微光环绕）·
+  <strong>中圈</strong>（11 个工具入口图标围成圆，每个有专属色）·
+  <strong>外圈</strong>（6 个 AI Agent 漂浮，代表外部世界）。<br>
+  <strong>动效</strong>：3 条同心圈虚线慢转（30/50/80s 一周，方向交替）+ 中心 pulse glow + Agent float + 工具 hover 放大。
+  <strong>适合</strong>：强烈的"工具箱"心智 — 用户一眼明白 ClawHeart 是中心，所有 11 工具围绕它。
+</div>
+
+</body>
+</html>

@@ -1,0 +1,598 @@
+/* 字体走系统栈；Tauri 沙箱环境下不依赖外网 Google Fonts。
+   Inter / JetBrains Mono 留给 dev 端自行安装。 */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   ClawHeart v2 — Design Tokens
+   每个主题用 RGB 三元组（tailwind opacity 工友），
+   并为每个工具准备独立 accent 色（更扁平 + 更彩色）。
+   ============================================================ */
+
+@layer base {
+  :root {
+    --bg-base: 245 242 235;
+    --bg-elev: 255 255 255;
+    --bg-elev2: 250 250 245;
+    --border: 229 224 213;
+    --border-soft: 237 232 220;
+    --text: 42 37 32;
+    --text-dim: 107 98 88;
+    --text-muted: 155 144 133;
+    --accent: 4 120 87;
+    --accent-dim: 6 95 70;
+    --critical: 220 38 38;
+    --high: 234 88 12;
+    --medium: 217 119 6;
+    --low: 4 120 87;
+
+    /* tool color palette — 每个工具一个 hue（扁平彩色） */
+    --tool-monitor:    37 99 235;   /* blue-600 */
+    --tool-scan:       234 88 12;   /* orange-600 */
+    --tool-skills:     147 51 234;  /* purple-600 */
+    --tool-advisory:   220 38 38;   /* red-600 */
+    --tool-logs:       8 145 178;   /* cyan-600 */
+    --tool-budget:     22 163 74;   /* green-600 */
+    --tool-audit:      113 113 122; /* zinc-500 */
+    --tool-token:      234 179 8;   /* amber-500 */
+    --tool-openclaw:   79 70 229;   /* indigo-600 */
+    --tool-relay:      236 72 153;  /* pink-500 */
+    --tool-policy:     100 116 139; /* slate-500 */
+    --tool-access:     16 185 129;  /* emerald-500 */
+  }
+
+  html, body, #root { height: 100%; }
+  body {
+    font-family: theme("fontFamily.sans");
+    color: rgb(var(--text));
+    background: rgb(var(--bg-base));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+  }
+  button { font: inherit; cursor: pointer; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--border));
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--text-muted)); }
+}
+
+/* ============================================================
+   THEME: Paper (default · 羊皮纸浅色 + 多彩工具)
+   ============================================================ */
+.theme-paper {
+  --bg-base: 245 242 235;
+  --bg-elev: 255 255 255;
+  --bg-elev2: 250 250 245;
+  --border: 229 224 213;
+  --border-soft: 237 232 220;
+  --text: 42 37 32;
+  --text-dim: 107 98 88;
+  --text-muted: 155 144 133;
+  --accent: 4 120 87;
+  --accent-dim: 6 95 70;
+  --critical: 220 38 38;
+  --high: 234 88 12;
+  --medium: 217 119 6;
+  --low: 4 120 87;
+}
+
+/* ============================================================
+   THEME: Carbon (深空墨)
+   ============================================================ */
+.theme-carbon {
+  --bg-base: 11 14 17;
+  --bg-elev: 20 24 29;
+  --bg-elev2: 28 33 40;
+  --border: 42 47 54;
+  --border-soft: 31 36 43;
+  --text: 230 233 238;
+  --text-dim: 139 146 160;
+  --text-muted: 92 99 112;
+  --accent: 34 197 94;
+  --accent-dim: 22 163 74;
+  --critical: 239 68 68;
+  --high: 249 115 22;
+  --medium: 251 191 36;
+  --low: 34 197 94;
+}
+
+/* ============================================================
+   THEME: Glacier (冰川蓝)
+   ============================================================ */
+.theme-glacier {
+  --bg-base: 15 20 25;
+  --bg-elev: 22 29 38;
+  --bg-elev2: 31 42 54;
+  --border: 43 56 71;
+  --border-soft: 32 41 58;
+  --text: 232 237 243;
+  --text-dim: 136 149 168;
+  --text-muted: 90 102 120;
+  --accent: 56 189 248;
+  --accent-dim: 14 165 233;
+  --critical: 248 113 113;
+  --high: 251 146 60;
+  --medium: 250 204 21;
+  --low: 56 189 248;
+}
+
+/* ============================================================
+   THEME: Terminal (终端绿 · 全等宽)
+   ============================================================ */
+.theme-terminal {
+  --bg-base: 0 0 0;
+  --bg-elev: 10 13 10;
+  --bg-elev2: 15 20 15;
+  --border: 26 42 26;
+  --border-soft: 18 32 18;
+  --text: 0 255 136;
+  --text-dim: 0 184 100;
+  --text-muted: 0 107 58;
+  --accent: 0 255 136;
+  --accent-dim: 0 221 119;
+  --critical: 255 51 85;
+  --high: 255 136 0;
+  --medium: 255 221 0;
+  --low: 0 255 136;
+}
+.theme-terminal, .theme-terminal * {
+  font-family: theme("fontFamily.mono") !important;
+}
+
+/* ============================================================
+   THEME: Cyber (赛博紫)
+   ============================================================ */
+.theme-cyber {
+  --bg-base: 10 6 18;
+  --bg-elev: 20 8 31;
+  --bg-elev2: 31 15 46;
+  --border: 45 27 71;
+  --border-soft: 31 18 50;
+  --text: 240 231 255;
+  --text-dim: 181 164 212;
+  --text-muted: 124 104 150;
+  --accent: 192 132 252;
+  --accent-dim: 168 85 247;
+  --critical: 255 46 99;
+  --high: 255 123 0;
+  --medium: 255 215 0;
+  --low: 192 132 252;
+}
+
+/* ============================================================
+   Reusable component classes
+   ============================================================ */
+@layer components {
+  .surface {
+    background: rgb(var(--bg-elev));
+    border: 1px solid rgb(var(--border));
+    border-radius: 14px;
+  }
+  .surface-soft {
+    background: rgb(var(--bg-elev) / 0.5);
+    border: 1px solid rgb(var(--border) / 0.6);
+    border-radius: 12px;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide font-mono;
+  }
+  .btn-primary {
+    background: rgb(var(--accent));
+    color: rgb(var(--bg-base));
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-transform;
+    box-shadow: 0 4px 16px rgb(var(--accent) / 0.25);
+  }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors;
+    color: rgb(var(--text-dim));
+  }
+  .btn-ghost:hover {
+    background: rgb(var(--bg-elev2));
+    color: rgb(var(--text));
+  }
+  .kbd {
+    @apply inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded text-[10px] font-mono;
+    background: rgb(var(--bg-base));
+    border: 1px solid rgb(var(--border));
+    color: rgb(var(--text-muted));
+  }
+  .severity-dot {
+    @apply inline-block w-2 h-2 rounded-full flex-shrink-0;
+  }
+}
+
+/* Sharper corners + glow in terminal mode */
+.theme-terminal .surface { border-radius: 4px; }
+.theme-terminal .btn-primary { box-shadow: 0 0 16px rgb(var(--accent) / 0.4); }
+
+/* Animation utility for status dot */
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgb(var(--accent));
+  box-shadow: 0 0 0 0 rgb(var(--accent) / 0.4);
+  animation: livepulse 2s infinite;
+}
+@keyframes livepulse {
+  0% { box-shadow: 0 0 0 0 rgb(var(--accent) / 0.5); }
+  70% { box-shadow: 0 0 0 6px rgb(var(--accent) / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(var(--accent) / 0); }
+}
+
+@keyframes alertpulse {
+  0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+  50% { opacity: 0.4; transform: translateY(-50%) scale(0.85); }
+}
+
+/* ============================================================
+   沉浸式背景 — 全局 radial glow + 细网格点阵
+   ============================================================ */
+.immersive-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgb(var(--accent) / 0.06), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgb(var(--accent) / 0.04), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgb(var(--text-muted) / 0.04), transparent 60%);
+}
+.immersive-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(var(--text-muted) / 0.18) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.25;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 30%, transparent 75%);
+}
+
+/* ============================================================
+   HomeHero — 跟随主题（浅/深都适配）· 统一字号 11px · 统一 padding
+   设计 token：
+     - HERO_FONT: 11px
+     - HERO_PADDING: 5px 10px
+     - HERO_GAP: 6px
+   ============================================================ */
+
+.hero-pipeline {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  background: transparent;
+  border: 0;
+  overflow: hidden;
+}
+.hero-pipeline .grid-bg {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgb(var(--text-muted) / 0.35) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+.hero-pipeline .glow-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--accent) / 0.10) 0%, transparent 70%);
+  animation: hero-bgpulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes hero-bgpulse {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+}
+@keyframes hero-float-slow {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(-7px); }
+}
+@keyframes hero-float-slower {
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(-5px); }
+}
+@keyframes hero-spin-slow { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes hero-spin-reverse { from { transform: rotate(0); } to { transform: rotate(-360deg); } }
+@keyframes hero-pulse-core {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--accent) / 0.45); }
+  70% { box-shadow: 0 0 0 16px rgb(var(--accent) / 0); }
+}
+@keyframes hero-dashflow { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes hero-pill-blink {
+  0%, 100% { background: rgb(var(--accent) / 0.05); border-color: rgb(var(--accent) / 0.35); }
+  50% { background: rgb(var(--accent) / 0.15); border-color: rgb(var(--accent) / 0.65); }
+}
+@keyframes hero-pill-result {
+  0%, 100% { background: rgb(var(--accent) / 0.12); }
+  50% { background: rgb(var(--accent) / 0.22); }
+}
+@keyframes hero-line-chip-pulse {
+  0%, 90%, 100% { opacity: 0.85; transform: translate(0, -50%) scale(1); }
+  10%, 30% { opacity: 1; transform: translate(0, -50%) scale(1.04); box-shadow: 0 0 10px rgb(var(--accent) / 0.25); }
+}
+
+.hero-pipeline .path-line {
+  stroke-dasharray: 6 6;
+  animation: hero-dashflow 1s linear infinite;
+}
+.hero-pipeline .agent-node {
+  position: absolute;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.hero-pipeline .agent-node-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  background: rgb(var(--bg-elev2));
+  border: 1px solid rgb(var(--border));
+  box-shadow: 0 2px 8px rgb(var(--text) / 0.06);
+  transition: all 0.18s;
+}
+.hero-pipeline .agent-node:hover .agent-node-icon {
+  border-color: rgb(var(--accent));
+  transform: scale(1.08);
+}
+.hero-pipeline .agent-node-label {
+  margin-top: 5px;
+  text-align: center;
+  font-size: 11px;
+  color: rgb(var(--text-dim));
+  font-family: "JetBrains Mono", monospace;
+  white-space: nowrap;
+}
+
+/* Center cluster */
+.hero-pipeline .core-cluster {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 180px; height: 180px;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+}
+.hero-pipeline .defense-orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px dashed rgb(var(--accent) / 0.2);
+  animation: hero-spin-slow 60s linear infinite;
+}
+.hero-pipeline .defense-orbit-2 {
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  border: 1px dotted rgb(var(--text-muted) / 0.18);
+  animation: hero-spin-reverse 90s linear infinite;
+}
+.hero-pipeline .core {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 25;
+  width: 108px; height: 108px;
+  background: rgb(var(--bg-elev2));
+  border: 2px solid rgb(var(--accent));
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 32px rgb(var(--accent) / 0.18);
+  animation: hero-pulse-core 2.4s infinite;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0;
+}
+.hero-pipeline .core-badge {
+  position: absolute;
+  top: -10px;
+  background: rgb(var(--accent));
+  color: rgb(var(--bg-elev));
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgb(var(--accent) / 0.35);
+  white-space: nowrap;
+}
+.hero-pipeline .core-badge.warn { background: rgb(var(--high)); }
+.hero-pipeline .core-badge.danger { background: rgb(var(--critical)); color: #fff; }
+.hero-pipeline .core-icon {
+  width: 32px; height: 32px;
+  color: rgb(var(--accent));
+  animation: hero-spin-slow 14s linear infinite;
+}
+.hero-pipeline .core-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgb(var(--text));
+  margin-top: 5px;
+}
+.hero-pipeline .core-role {
+  font-size: 11px;
+  color: rgb(var(--text-muted));
+  font-family: "JetBrains Mono", monospace;
+  margin-top: 2px;
+}
+
+/* Line chip 标签贴在 output 线上
+   - 大小统一：min-width 90px、padding 5×10
+   - 边框统一淡雅 accent（移除彩虹色）
+   - 内容左对齐 */
+.hero-pipeline .line-chip {
+  position: absolute;
+  transform: translate(0, -50%);
+  z-index: 18;
+  padding: 5px 10px;
+  min-width: 90px;
+  background: rgb(var(--bg-elev2));
+  border: 1px solid rgb(var(--accent) / 0.3);
+  border-radius: 11px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgb(var(--text) / 0.05);
+  animation: hero-line-chip-pulse 6s ease-in-out infinite;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.hero-pipeline .line-chip:hover {
+  z-index: 30;
+  border-color: rgb(var(--accent));
+  background: rgb(var(--accent) / 0.06);
+  transform: translate(0, -50%) scale(1.04);
+}
+.hero-pipeline .line-chip .id {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgb(var(--accent));
+}
+.hero-pipeline .line-chip .name {
+  color: rgb(var(--text-dim));
+  font-size: 11px;
+  font-weight: 500;
+}
+.hero-pipeline .line-chip:nth-of-type(1) { animation-delay: 0s; }
+.hero-pipeline .line-chip:nth-of-type(2) { animation-delay: 0.6s; }
+.hero-pipeline .line-chip:nth-of-type(3) { animation-delay: 1.2s; }
+.hero-pipeline .line-chip:nth-of-type(4) { animation-delay: 1.8s; }
+.hero-pipeline .line-chip:nth-of-type(5) { animation-delay: 2.4s; }
+.hero-pipeline .line-chip:nth-of-type(6) { animation-delay: 3.0s; }
+.hero-pipeline .line-chip:nth-of-type(7) { animation-delay: 3.6s; }
+.hero-pipeline .line-chip:nth-of-type(8) { animation-delay: 4.2s; }
+
+/* Right output stack — 每个 pill 用 absolute top，与 chip 一一对齐 */
+.hero-pipeline .output-stack {
+  position: absolute;
+  right: 18px;
+  top: 0;
+  bottom: 0;
+  z-index: 15;
+  width: 138px;
+}
+.hero-pipeline .stream-pill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  background: rgb(var(--accent) / 0.05);
+  border: 1px solid rgb(var(--accent) / 0.35);
+  border-radius: 12px;
+  font-size: 11px;
+  color: rgb(var(--text));
+  font-family: "JetBrains Mono", monospace;
+  animation: hero-pill-blink 3s ease-in-out infinite;
+  cursor: pointer;
+  text-decoration: none;
+}
+.hero-pipeline .stream-pill:hover {
+  filter: brightness(1.05);
+  border-color: rgb(var(--accent));
+  z-index: 30;
+}
+.hero-pipeline .stream-pill .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgb(var(--accent));
+  flex-shrink: 0;
+  box-shadow: 0 0 4px rgb(var(--accent) / 0.5);
+}
+.hero-pipeline .stream-pill .label { flex: 1; font-size: 11px; }
+.hero-pipeline .stream-pill .layer-num {
+  font-size: 11px;
+  color: rgb(var(--accent));
+  background: rgb(var(--accent) / 0.1);
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.hero-pipeline .stream-pill.result {
+  background: rgb(var(--accent) / 0.12);
+  border: 1px solid rgb(var(--accent));
+  color: rgb(var(--accent));
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 9px;
+  animation: hero-pill-result 2s ease-in-out infinite;
+  box-shadow: 0 2px 10px rgb(var(--accent) / 0.15);
+}
+.hero-pipeline .stream-pill.result .check { width: 13px; height: 13px; color: rgb(var(--accent)); }
+.hero-pipeline .stream-pill:nth-child(1) { animation-delay: 0.0s; }
+.hero-pipeline .stream-pill:nth-child(2) { animation-delay: 0.35s; }
+.hero-pipeline .stream-pill:nth-child(3) { animation-delay: 0.7s; }
+.hero-pipeline .stream-pill:nth-child(4) { animation-delay: 1.05s; }
+.hero-pipeline .stream-pill:nth-child(5) { animation-delay: 1.4s; }
+.hero-pipeline .stream-pill:nth-child(6) { animation-delay: 1.75s; }
+.hero-pipeline .stream-pill:nth-child(7) { animation-delay: 2.1s; }
+.hero-pipeline .stream-pill:nth-child(8) { animation-delay: 2.45s; }
+
+/* Tools belt — 单行均匀分布（CSS grid 自动按 TOOLS 数量等宽） */
+.hero-tools-belt {
+  width: 100%;
+  margin-top: 18px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+}
+.hero-tool-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px;
+  border-radius: 12px;
+  background: rgb(var(--bg-elev));
+  border: 1px solid rgb(var(--border));
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.hero-tool-pill:hover:not(.soon) {
+  border-color: var(--tc);
+  background: rgb(var(--bg-elev2));
+  transform: translateY(-2px);
+}
+.hero-tool-pill-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--tc) 14%, transparent);
+  color: var(--tc);
+}
+.hero-tool-pill-label {
+  font-size: 10px;
+  color: rgb(var(--text-dim));
+  text-align: center;
+  line-height: 1.2;
+  font-family: "JetBrains Mono", monospace;
+}
+.hero-tool-pill.soon { opacity: 0.4; cursor: not-allowed; }

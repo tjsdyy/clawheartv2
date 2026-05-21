@@ -1,0 +1,111 @@
+{
+  "app": {
+    "name": "ClawHeart",
+    "tagline": "Local AI Security Runtime",
+    "protected": "Protected",
+    "paused": "Paused",
+    "kill_switch_active": "Kill Switch Active"
+  },
+  "nav": {
+    "home": "Home",
+    "agents": "Agents",
+    "settings": "Settings",
+    "kill_switch": "Kill Switch",
+    "command_palette": "Command Palette",
+    "theme": "Theme"
+  },
+  "tools": {
+    "access_mode": "Monitor Mode",
+    "monitor": "Monitor",
+    "scan": "Scan",
+    "skills": "Skills Marketplace",
+    "advisory": "Security Advisories",
+    "logs": "Request Logs",
+    "budget": "Budget",
+    "audit": "Audit Report",
+    "openclaw": "OpenClaw Integration",
+    "agents": "Agent Management",
+    "settings": "Settings",
+    "token_verify": "Token Verify",
+    "providers": "Model Channels",
+    "policy": "Enterprise Policy",
+    "more": "More Tools"
+  },
+  "onboarding": {
+    "welcome": "Welcome to ClawHeart",
+    "description": "Let's discover the AI Agents on your machine first to activate the toolbox.",
+    "details": "We'll scan locally for Claude Code, Codex, Cursor, Gemini CLI, Windsurf, OpenClaw and their MCP configurations.",
+    "start_discover": "Start Discovery",
+    "scanning": "Scanning…",
+    "skip": "Skip · Demo mode"
+  },
+  "monitor": {
+    "tab_live": "Live Stream",
+    "tab_intercept": "Intercepts",
+    "tab_tokens": "Token Usage",
+    "tab_budget": "Budget",
+    "filter_severity": "Severity",
+    "filter_type": "Event Type",
+    "filter_agent": "Agent",
+    "header_time": "TIME",
+    "header_agent": "AGENT",
+    "header_endpoint": "ENDPOINT",
+    "header_status": "RES",
+    "detail_chain_hit": "MCP Attack Chain Detected",
+    "tool_sequence": "Tool Call Sequence",
+    "mitre_attack": "MITRE ATT&CK",
+    "allow_sequence": "Allow This Sequence",
+    "permanently_block": "Permanently Block",
+    "redacted_copy": "Copy Redacted ID"
+  },
+  "scan": {
+    "title": "Local AI Security Scan",
+    "subtitle": "80 deterministic checks · Zero LLM dependency · ~30s",
+    "select_items": "Select Scan Items",
+    "selected": "{{n}} / {{total}} selected · {{checks}} checks total",
+    "start": "Start Scan",
+    "duration_hint": "≈30s",
+    "history": "History",
+    "view": "View",
+    "view_all": "View All"
+  },
+  "skills": {
+    "tab_all": "All",
+    "tab_installed": "Installed",
+    "tab_recommended": "Recommended",
+    "tab_safe": "Safe",
+    "tab_latest": "Latest",
+    "status_safe": "Safe",
+    "status_warn": "Warning",
+    "status_disabled": "Disabled",
+    "status_unaudited": "Unaudited",
+    "install": "Install",
+    "installed": "Installed",
+    "details": "Details",
+    "view_why": "View Why"
+  },
+  "common": {
+    "back": "Back",
+    "pause": "Pause",
+    "search": "Search",
+    "export": "Export",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "no_results": "No results",
+    "loading": "Loading…"
+  },
+  "kbd": {
+    "navigate": "↑↓ navigate",
+    "execute": "↵ execute",
+    "close": "esc close"
+  },
+  "tray": {
+    "recent_events": "Recent Events",
+    "pause_5min": "Pause Protection 5min",
+    "kill_switch": "Kill Switch",
+    "open_main": "Open Main Panel",
+    "quit": "Quit"
+  }
+}

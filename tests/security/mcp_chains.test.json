@@ -1,0 +1,36 @@
+{
+  "_comment": "MCP 攻击链回归样本 — W11 绿灯：合成会话 100% 命中、间隙容忍 5 次混淆调用不丢",
+  "scenarios": [
+    {
+      "id": "RECON_EXFIL_PERSIST_basic",
+      "expected_chain": "RECON_EXFIL_PERSIST",
+      "tool_sequence": ["fs.list", "fs.read", "net.post"]
+    },
+    {
+      "id": "RECON_EXFIL_PERSIST_with_gaps",
+      "expected_chain": "RECON_EXFIL_PERSIST",
+      "tool_sequence": ["fs.list", "console.log", "format.json", "fs.read", "string.upper", "net.post"]
+    },
+    {
+      "id": "CRED_GRAB_EXFIL_env",
+      "expected_chain": "CRED_GRAB_EXFIL",
+      "tool_sequence": ["fs.read:.env", "net.post"]
+    },
+    {
+      "id": "SSH_KEY_EXFIL_classic",
+      "expected_chain": "SSH_KEY_EXFIL",
+      "tool_sequence": ["fs.list:~/.ssh", "fs.read:id_rsa", "net.post"]
+    },
+    {
+      "id": "MEMORY_POISON_THEN_EXEC_writable_md",
+      "expected_chain": "MEMORY_POISON_THEN_EXEC",
+      "tool_sequence": ["fs.write:CLAUDE.md", "shell.exec"]
+    },
+    {
+      "_comment": "negative tests — must NOT match any chain",
+      "id": "innocent_fs_read",
+      "expected_chain": null,
+      "tool_sequence": ["fs.read:package.json", "fs.read:README.md"]
+    }
+  ]
+}

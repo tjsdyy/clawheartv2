@@ -1,0 +1,12 @@
+{
+  "app": { "name": "ClawHeart", "tagline": "로컬 AI 보안 런타임", "protected": "보호 중", "paused": "일시 정지", "kill_switch_active": "긴급 정지 활성화됨" },
+  "nav": { "home": "홈", "agents": "에이전트", "settings": "설정", "kill_switch": "긴급 정지", "command_palette": "명령 팔레트", "theme": "테마" },
+  "tools": { "monitor": "모니터", "scan": "스캔", "skills": "스킬 마켓", "advisory": "보안 공지", "logs": "요청 로그", "budget": "예산", "audit": "감사 보고서", "openclaw": "OpenClaw 통합", "agents": "에이전트 관리", "settings": "설정", "token_verify": "토큰 검증", "relay": "릴레이", "policy": "기업 정책", "more": "더 보기" },
+  "onboarding": { "welcome": "ClawHeart에 오신 것을 환영합니다", "description": "먼저 컴퓨터의 AI 에이전트를 발견하여 도구상자를 활성화하세요.", "details": "Claude Code, Codex, Cursor, Gemini CLI, Windsurf, OpenClaw 및 MCP 구성을 스캔합니다.", "start_discover": "발견 시작", "scanning": "스캔 중…", "skip": "건너뛰기 · 데모 모드" },
+  "monitor": { "tab_live": "실시간 스트림", "tab_intercept": "차단 기록", "tab_tokens": "토큰 사용량", "tab_budget": "예산", "filter_severity": "심각도", "filter_type": "이벤트 유형", "filter_agent": "에이전트", "header_time": "시간", "header_agent": "에이전트", "header_endpoint": "엔드포인트", "header_status": "응답", "detail_chain_hit": "MCP 공격 체인 감지", "tool_sequence": "도구 호출 시퀀스", "mitre_attack": "MITRE ATT&CK", "allow_sequence": "이 시퀀스 허용", "permanently_block": "영구 차단", "redacted_copy": "수정된 ID 복사" },
+  "scan": { "title": "로컬 AI 보안 스캔", "subtitle": "80개 결정론적 검사 · LLM 무의존 · 평균 30초", "select_items": "스캔 항목 선택", "selected": "{{n}} / {{total}} 항목 선택 · 총 {{checks}}개 검사", "start": "스캔 시작", "duration_hint": "≈30초", "history": "기록", "view": "보기", "view_all": "전체 보기" },
+  "skills": { "tab_all": "전체", "tab_installed": "설치됨", "tab_recommended": "추천", "tab_safe": "안전", "tab_latest": "최신", "status_safe": "안전", "status_warn": "경고", "status_disabled": "비활성", "status_unaudited": "미감사", "install": "설치", "installed": "설치됨", "details": "상세", "view_why": "이유 보기" },
+  "common": { "back": "뒤로", "pause": "일시정지", "search": "검색", "export": "내보내기", "save": "저장", "cancel": "취소", "delete": "삭제", "confirm": "확인", "no_results": "결과 없음", "loading": "로딩 중…" },
+  "kbd": { "navigate": "↑↓ 선택", "execute": "↵ 실행", "close": "esc 닫기" },
+  "tray": { "recent_events": "최근 이벤트", "pause_5min": "5분간 보호 일시정지", "kill_switch": "긴급 정지", "open_main": "메인 패널 열기", "quit": "종료" }
+}

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>ClawHeart Hero · A+C 融合 · 流水线 + 6 层防御</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0B0E11;
+    color: #E6E9EE;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "PingFang SC", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px;
+  }
+  .frame-label {
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: #8B92A0;
+    margin-bottom: 8px;
+    font-family: "JetBrains Mono", monospace;
+  }
+  h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .subtitle { color: #8B92A0; font-size: 14px; margin-bottom: 32px; }
+
+  /* === Hero canvas === */
+  .hero {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    height: 420px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #1A1D21 0%, #111315 100%);
+    border: 1px solid #252629;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 24px 64px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+    opacity: 0.6;
+  }
+  .glow-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 360px; height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34,197,94,0.18) 0%, transparent 70%);
+    animation: pulse-glow-bg 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes pulse-glow-bg {
+    0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
+  }
+  @keyframes float-slow {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-8px); }
+  }
+  @keyframes float-slower {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(-5px); }
+  }
+  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes spin-slow-reverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+  @keyframes pulse-glow-ring {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+    70% { box-shadow: 0 0 0 22px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+  @keyframes dash-flow { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+  @keyframes ring-rotate {
+    from { transform: translate(-50%, -50%) rotate(0); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  .path-line { stroke-dasharray: 6 6; animation: dash-flow 1s linear infinite; }
+  .node { position: absolute; z-index: 10; transform: translate(-50%, -50%); }
+  .node-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: #22252A;
+    border: 1px solid #31353B;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 10;
+  }
+  .node-icon.lg { width: 56px; height: 56px; border-radius: 16px; }
+  .node-label {
+    margin-top: 6px;
+    text-align: center;
+    font-size: 10.5px;
+    color: #8B92A0;
+    font-family: "JetBrains Mono", monospace;
+    white-space: nowrap;
+  }
+
+  /* === Center cluster: core + 6 defense layers === */
+  .core-cluster {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 240px; height: 240px;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+  }
+  /* 旋转的防御层轨道 + 6 chip */
+  .defense-orbit {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px dashed rgba(34,197,94,0.25);
+    animation: spin-slow 60s linear infinite;
+  }
+  /* 第二条反向虚线圈 */
+  .defense-orbit-2 {
+    position: absolute;
+    inset: 20px;
+    border-radius: 50%;
+    border: 1px dotted rgba(255,255,255,0.08);
+    animation: spin-slow-reverse 90s linear infinite;
+  }
+  .layer-chip {
+    position: absolute;
+    top: 50%; left: 50%;
+    padding: 4px 9px;
+    background: rgba(20,24,29,0.92);
+    border: 1px solid rgba(34,197,94,0.4);
+    border-radius: 12px;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #4ADE80;
+    font-family: "JetBrains Mono", monospace;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    /* counter-rotate so chip stays upright (parent spins) */
+    animation: spin-slow-reverse 60s linear infinite;
+  }
+  .layer-chip .num {
+    color: #22C55E;
+    margin-right: 4px;
+    font-weight: 700;
+  }
+
+  /* Center logo (固定不转，独立 pulse) */
+  .core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 25;
+    width: 120px; height: 120px;
+    background: linear-gradient(135deg, #22252A, #1A1D21);
+    border: 2px solid #22C55E;
+    border-radius: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 16px 48px rgba(34,197,94,0.3);
+    animation: pulse-glow-ring 2.4s infinite;
+  }
+  .core-badge {
+    position: absolute;
+    top: -10px;
+    background: #22C55E;
+    color: #0B0E11;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(34,197,94,0.4);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .core-icon {
+    width: 42px; height: 42px;
+    color: #22C55E;
+    animation: spin-slow 14s linear infinite;
+  }
+  .core-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #E6E9EE;
+    margin-top: 4px;
+  }
+  .core-role {
+    font-size: 9px;
+    color: #8B92A0;
+    font-family: "JetBrains Mono", monospace;
+    margin-top: 2px;
+  }
+
+  /* Tools belt */
+  .tools-belt {
+    width: 100%;
+    max-width: 1100px;
+    margin-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    gap: 8px;
+  }
+  .tool-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 4px;
+    border-radius: 12px;
+    background: #14181D;
+    border: 1px solid #252629;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .tool-pill:hover {
+    border-color: var(--tc);
+    background: #1C2128;
+    transform: translateY(-2px);
+  }
+  .tool-pill-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--tc) 14%, transparent);
+    color: var(--tc);
+  }
+  .tool-pill-label {
+    font-size: 10px;
+    color: #8B92A0;
+    text-align: center;
+    line-height: 1.2;
+    font-family: "JetBrains Mono", monospace;
+  }
+  .soon { opacity: 0.35; }
+
+  .demo-note {
+    margin-top: 32px;
+    max-width: 1100px;
+    width: 100%;
+    font-size: 12.5px;
+    color: #8B92A0;
+    line-height: 1.7;
+    padding: 16px 20px;
+    background: #14181D;
+    border: 1px solid #252629;
+    border-radius: 12px;
+  }
+  .demo-note strong { color: #E6E9EE; font-weight: 500; }
+  .demo-note .accent { color: #22C55E; }
+  .demo-note kbd {
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.25);
+    color: #4ADE80;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="frame-label">A + C 融合 · 流水线 + 6 防御层</div>
+<h1>AI Agent 流量 → ClawHeart 6 层防御 → 4 类安全产物</h1>
+<p class="subtitle">A 的左右流水线骨架 · 中心 6 层防御 chip 旋转环绕</p>
+
+<div class="hero">
+  <div class="grid-bg"></div>
+  <div class="glow-center"></div>
+
+  <!-- SVG: input/output flow lines -->
+  <svg style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index: 5;" viewBox="0 0 1100 420" preserveAspectRatio="none">
+    <defs>
+      <!-- Input: 6 agents → cluster (center at 480, 210; cluster ring radius 120) -->
+      <path id="in-1" d="M 130 60  C 280 60,  340 200, 380 210"/>
+      <path id="in-2" d="M 80 130 C 240 130, 320 200, 380 210"/>
+      <path id="in-3" d="M 80 290 C 240 290, 320 220, 380 210"/>
+      <path id="in-4" d="M 130 360 C 280 360, 340 220, 380 210"/>
+      <path id="in-5" d="M 80 210 C 220 210, 340 210, 380 210"/>
+      <path id="in-6" d="M 200 90  C 320 110, 360 200, 380 210"/>
+      <!-- Output: cluster → 4 outputs -->
+      <path id="out-1" d="M 620 210 C 750 210, 850 80,  970 80"/>
+      <path id="out-2" d="M 620 210 C 750 210, 880 165, 970 165"/>
+      <path id="out-3" d="M 620 210 C 750 210, 880 255, 970 255"/>
+      <path id="out-4" d="M 620 210 C 750 210, 850 340, 970 340"/>
+    </defs>
+    <g stroke="#3F4248" stroke-width="1.5" fill="none" class="path-line" opacity="0.55">
+      <use href="#in-1"/><use href="#in-2"/><use href="#in-3"/>
+      <use href="#in-4"/><use href="#in-5"/><use href="#in-6"/>
+    </g>
+    <g stroke="#22C55E" stroke-width="1.5" fill="none" class="path-line" opacity="0.75">
+      <use href="#out-1"/><use href="#out-2"/><use href="#out-3"/><use href="#out-4"/>
+    </g>
+    <!-- Input particles -->
+    <g><circle r="5" fill="#F97316" opacity="0.4"/><circle r="2.5" fill="#F97316"/>
+      <animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#in-1"/></animateMotion></g>
+    <g><circle r="5" fill="#A855F7" opacity="0.4"/><circle r="2.5" fill="#A855F7"/>
+      <animateMotion dur="3.0s" repeatCount="indefinite"><mpath href="#in-2"/></animateMotion></g>
+    <g><circle r="5" fill="#06B6D4" opacity="0.4"/><circle r="2.5" fill="#06B6D4"/>
+      <animateMotion dur="2.8s" repeatCount="indefinite"><mpath href="#in-3"/></animateMotion></g>
+    <g><circle r="5" fill="#3B82F6" opacity="0.4"/><circle r="2.5" fill="#3B82F6"/>
+      <animateMotion dur="3.2s" repeatCount="indefinite"><mpath href="#in-4"/></animateMotion></g>
+    <g><circle r="5" fill="#EC4899" opacity="0.4"/><circle r="2.5" fill="#EC4899"/>
+      <animateMotion dur="2.5s" repeatCount="indefinite"><mpath href="#in-5"/></animateMotion></g>
+    <g><circle r="5" fill="#4F46E5" opacity="0.4"/><circle r="2.5" fill="#4F46E5"/>
+      <animateMotion dur="2.9s" repeatCount="indefinite"><mpath href="#in-6"/></animateMotion></g>
+    <!-- Output particles -->
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="2.1s" repeatCount="indefinite"><mpath href="#out-1"/></animateMotion></g>
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="2.3s" repeatCount="indefinite"><mpath href="#out-2"/></animateMotion></g>
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="2.0s" repeatCount="indefinite"><mpath href="#out-3"/></animateMotion></g>
+    <g><circle r="5" fill="#22C55E" opacity="0.4"/><circle r="2.5" fill="#22C55E"/>
+      <animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#out-4"/></animateMotion></g>
+  </svg>
+
+  <!-- Left: 6 AI Agents -->
+  <div class="node" style="left:12%; top:14%; animation: float-slow 4s ease-in-out infinite;">
+    <div class="node-icon" style="color:#F97316;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 4l8 14H4L12 6z"/></svg>
+    </div>
+    <div class="node-label">Claude</div>
+  </div>
+  <div class="node" style="left:8%; top:31%; animation: float-slower 5s ease-in-out infinite;">
+    <div class="node-icon" style="color:#A855F7;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+    </div>
+    <div class="node-label">Codex</div>
+  </div>
+  <div class="node" style="left:8%; top:69%; animation: float-slow 4.5s ease-in-out infinite;">
+    <div class="node-icon" style="color:#06B6D4;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h10v2H4v-2z"/></svg>
+    </div>
+    <div class="node-label">Cursor</div>
+  </div>
+  <div class="node" style="left:12%; top:86%; animation: float-slower 6s ease-in-out infinite;">
+    <div class="node-icon" style="color:#3B82F6;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1l9 4v6c0 5-3.8 9.7-9 11-5.2-1.3-9-6-9-11V5l9-4z"/></svg>
+    </div>
+    <div class="node-label">Gemini</div>
+  </div>
+  <div class="node" style="left:6%; top:50%; animation: float-slow 5.5s ease-in-out infinite;">
+    <div class="node-icon" style="color:#EC4899;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+    </div>
+    <div class="node-label">Windsurf</div>
+  </div>
+  <div class="node" style="left:18%; top:22%; animation: float-slower 4.8s ease-in-out infinite;">
+    <div class="node-icon" style="color:#4F46E5;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 14l-5-5h3V8h4v4h3l-5 5z"/></svg>
+    </div>
+    <div class="node-label">OpenClaw</div>
+  </div>
+
+  <!-- Center cluster: 6 defense layers orbiting + ClawHeart core -->
+  <div class="core-cluster">
+    <!-- 旋转的虚线轨道 -->
+    <div class="defense-orbit"></div>
+    <div class="defense-orbit-2"></div>
+
+    <!-- 6 layer chips, spread around 360° (60° each) -->
+    <!-- 半径 110px (cluster=240, chip 围在 r=110 圆周上) -->
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(110px, 0);">
+      <span class="num">L0</span>协议归一化
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(55px, -95px);">
+      <span class="num">L1</span>网络代理
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(-55px, -95px);">
+      <span class="num">L2</span>内容 DLP
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(-110px, 0);">
+      <span class="num">L3</span>MCP 深度
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(-55px, 95px);">
+      <span class="num">L4</span>供应链
+    </div>
+    <div class="layer-chip" style="transform: translate(-50%, -50%) translate(55px, 95px);">
+      <span class="num">L7</span>失败关闭
+    </div>
+
+    <!-- Center logo -->
+    <div class="core">
+      <span class="core-badge">● 防护中</span>
+      <svg class="core-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2 L3 6 L3 11 C3 17 7 21 12 22 C17 21 21 17 21 11 L21 6 Z"/>
+        <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="core-name">ClawHeart</div>
+      <div class="core-role">L0–L7 · 失败关闭</div>
+    </div>
+  </div>
+
+  <!-- Right: 4 outputs -->
+  <div class="node" style="left:88%; top:19%; animation: float-slower 4s ease-in-out infinite;">
+    <div class="node-icon lg" style="color:#EF4444;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="node-label">拦截</div>
+  </div>
+  <div class="node" style="left:88%; top:39%; animation: float-slow 5s ease-in-out infinite;">
+    <div class="node-icon lg" style="color:#22C55E;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 5-3.8 9.5-9 10-5.2-.5-9-5-9-10V5l9-4 9 4v7z"/></svg>
+    </div>
+    <div class="node-label">审计</div>
+  </div>
+  <div class="node" style="left:88%; top:61%; animation: float-slow 4.5s ease-in-out infinite;">
+    <div class="node-icon lg" style="color:#A855F7;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    </div>
+    <div class="node-label">治理</div>
+  </div>
+  <div class="node" style="left:88%; top:81%; animation: float-slower 6s ease-in-out infinite;">
+    <div class="node-icon lg" style="color:#3B82F6;">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+    </div>
+    <div class="node-label">同步</div>
+  </div>
+</div>
+
+<!-- Tools belt: 11 entries -->
+<div class="tools-belt">
+  <div class="tool-pill" style="--tc:#2563EB"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="tool-pill-label">监控</div></div>
+  <div class="tool-pill" style="--tc:#EA580C"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div><div class="tool-pill-label">扫描</div></div>
+  <div class="tool-pill" style="--tc:#9333EA"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div><div class="tool-pill-label">技能</div></div>
+  <div class="tool-pill" style="--tc:#DC2626"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="tool-pill-label">公告</div></div>
+  <div class="tool-pill" style="--tc:#0891B2"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="tool-pill-label">日志</div></div>
+  <div class="tool-pill" style="--tc:#16A34A"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div><div class="tool-pill-label">预算</div></div>
+  <div class="tool-pill" style="--tc:#71717A"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="tool-pill-label">审计</div></div>
+  <div class="tool-pill soon" style="--tc:#EAB308"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></div><div class="tool-pill-label">Token</div></div>
+  <div class="tool-pill" style="--tc:#4F46E5"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div><div class="tool-pill-label">OpenClaw</div></div>
+  <div class="tool-pill soon" style="--tc:#EC4899"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.93 4.93a10 10 0 0 1 14.14 0M1 1l22 22M16.72 11.06a4.94 4.94 0 0 0-3-3M5 12.55a11 11 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9"/></svg></div><div class="tool-pill-label">中转</div></div>
+  <div class="tool-pill soon" style="--tc:#64748B"><div class="tool-pill-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div class="tool-pill-label">策略</div></div>
+</div>
+
+<div class="demo-note">
+  <strong>A + C 融合方案</strong>：保留 A 的流水线骨架（<span class="accent">左 6 Agent → 中 ClawHeart → 右 4 输出</span> + 下方 11 工具），在中心 logo 周围加入 C 的 <span class="accent">6 防御层 chip</span>。
+  6 层选择经过精简：
+  <kbd>L0</kbd> 协议归一化 · <kbd>L1</kbd> 网络代理 · <kbd>L2</kbd> 内容 DLP · <kbd>L3</kbd> MCP 深度 · <kbd>L4</kbd> 供应链 · <kbd>L7</kbd> 失败关闭。<br>
+  L5（系统）和 L6（数据）合并隐含在 L4 / L7 中，避免视觉拥挤。<br>
+  <strong>动效</strong>：6 chip 沿虚线轨道 60s 慢转 + 反向自旋让文字始终正向 · 中心 logo 12s spin + 2.4s pulse glow · 流入 6 粒子 / 流出 4 粒子。
+  <strong>"流水线 + 安全感"</strong>：用户既能看到"流量进出"的方向感，又能直观感受到"中心是一套有体系的防御"。
+</div>
+
+</body>
+</html>
