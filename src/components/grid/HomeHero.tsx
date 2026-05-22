@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { TOOLS } from "./tools.config";
 import { useStatus } from "@/hooks/useStatus";
@@ -11,6 +12,7 @@ import { useAgents } from "@/hooks/useAgents";
  */
 export function HomeHero() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { data: status } = useStatus();
   const { data: agents = [] } = useAgents();
   const protectedNow = status?.protected ?? true;
@@ -195,7 +197,9 @@ export function HomeHero() {
               <span className="hero-tool-pill-icon">
                 <Icon width={16} height={16} strokeWidth={2} />
               </span>
-              <span className="hero-tool-pill-label">{tool.label}</span>
+              <span className="hero-tool-pill-label">
+                {i18n.exists(`tools.${tool.id}`) ? t(`tools.${tool.id}`) : tool.label}
+              </span>
             </button>
           );
         })}

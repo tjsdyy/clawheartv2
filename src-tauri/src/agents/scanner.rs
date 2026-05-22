@@ -22,6 +22,7 @@ impl Scanner {
                 Arc::new(super::platforms::windsurf::WindsurfPlatform),
                 Arc::new(super::platforms::openclaw::OpenClawPlatform),
                 Arc::new(super::platforms::openeva::OpenEvaPlatform),
+                Arc::new(super::platforms::hermes::HermesPlatform),
                 // 未知平台候选探测 —— 扫 ~/.<name>/ 含 AI 线索的目录，
                 // 返回 status: "candidate"，UI 引导用户确认。
                 Arc::new(super::platforms::unknown::UnknownPlatform),

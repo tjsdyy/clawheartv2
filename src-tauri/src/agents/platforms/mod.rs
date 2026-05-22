@@ -5,6 +5,7 @@ pub mod codex;
 pub mod cursor;
 pub mod detect;
 pub mod gemini;
+pub mod hermes;
 pub mod openclaw;
 pub mod openeva;
 pub mod unknown;

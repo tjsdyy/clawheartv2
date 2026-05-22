@@ -1,5 +1,11 @@
 //! Codex CLI 配置探测器（env 写入模式）
 //!
+//! ## 反向导入
+//! 同时支持解析 ~/.codex/config.toml 的 `[model_providers.xxx]` 多 section（cc-switch 与 9router 都用此结构）
+//!
+//! ## 原说明
+//!
+//!
 //! Codex CLI 通过环境变量配置：
 //!   OPENAI_API_BASE / OPENAI_BASE_URL
 //!   OPENAI_API_KEY
@@ -20,8 +26,158 @@
 //!   - snapshot before/after 仅涉及 env-codex.sh，干净可控
 
 use crate::agents::config_probe::*;
+use crate::agents::probes::ChannelCandidate;
 use crate::agents::DiscoveredAgent;
 use std::path::PathBuf;
+
+/// 从 ~/.codex/config.toml + ~/.codex/auth.json 提取所有 model_providers
+pub fn extract_channels(agent_id: &str) -> Vec<ChannelCandidate> {
+    let Some(home) = home_dir() else { return vec![]; };
+
+    // 1. auth.json 拿 api_key + auth_mode（用于判断 OAuth）
+    let auth_json: Option<serde_json::Value> =
+        std::fs::read_to_string(home.join(".codex/auth.json"))
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok());
+
+    let api_key: Option<String> = auth_json.as_ref().and_then(|v| {
+        v.get("OPENAI_API_KEY")
+            .or_else(|| v.get("api_key"))
+            .and_then(|s| s.as_str())
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string())
+    });
+
+    // 识别 ChatGPT OAuth 模式（cc-switch / 9router 都用 auth_mode 字段标识）
+    let is_oauth_account = auth_json
+        .as_ref()
+        .and_then(|v| v.get("auth_mode").and_then(|s| s.as_str()))
+        .map(|m| m == "oauth" || m == "chatgpt")
+        .unwrap_or(false)
+        || auth_json
+            .as_ref()
+            .and_then(|v| v.get("tokens"))
+            .is_some(); // 含 OAuth tokens 字段也算账号模式
+
+    // 2. config.toml 简易解析 [model_providers.<name>] section
+    let toml_path = home.join(".codex/config.toml");
+    let Ok(content) = std::fs::read_to_string(&toml_path) else {
+        return vec![];
+    };
+
+    let providers = parse_codex_toml_providers(&content);
+    if providers.is_empty() {
+        return vec![];
+    }
+
+    providers
+        .into_iter()
+        .map(|(name, fields)| {
+            let base_url = fields
+                .get("base_url")
+                .or_else(|| fields.get("baseUrl"))
+                .cloned()
+                .unwrap_or_default();
+            let wire_api = fields
+                .get("wire_api")
+                .cloned()
+                .unwrap_or_else(|| "responses".into());
+            let display_name = fields.get("name").cloned().unwrap_or_else(|| name.clone());
+            let protocol = if wire_api.contains("anthropic") {
+                "anthropic"
+            } else if wire_api.contains("gemini") {
+                "gemini"
+            } else if wire_api.contains("responses") {
+                "openai_responses"
+            } else {
+                "openai"
+            };
+
+            let mut warnings = Vec::new();
+            if is_oauth_account && api_key.is_none() {
+                warnings.push(
+                    "Codex ChatGPT 账号登录模式：本机无原生 OpenAI API key，需用户手动补一个直连 key 才能用 ClawHeart 代理"
+                        .into(),
+                );
+            } else if api_key.is_none() {
+                warnings.push("~/.codex/auth.json 中无 OPENAI_API_KEY，导入后需手动配置".into());
+            }
+            if base_url.is_empty() {
+                warnings.push("base_url 字段缺失".into());
+            }
+
+            ChannelCandidate {
+                id: format!("codex:{}", name),
+                name: display_name,
+                source_agent_id: agent_id.to_string(),
+                source_platform: "codex".to_string(),
+                base_url,
+                api_key: api_key.clone(),
+                protocol: protocol.to_string(),
+                default_model: None,
+                provider_kind: "custom".to_string(),
+                already_exists: false,
+                warnings,
+            }
+        })
+        .filter(|c| !c.base_url.is_empty())
+        .collect()
+}
+
+/// 简易 TOML 解析：只提取 `[model_providers.<name>]` section + 其下 `key = "value"` 行
+/// 返回 Vec<(provider_name, HashMap<field_key, value>)>
+fn parse_codex_toml_providers(
+    content: &str,
+) -> Vec<(String, std::collections::HashMap<String, String>)> {
+    use std::collections::HashMap;
+    let mut out: Vec<(String, HashMap<String, String>)> = Vec::new();
+    let mut current: Option<(String, HashMap<String, String>)> = None;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+        // 检测 section [model_providers.<name>]
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            // 提交上一个
+            if let Some((name, map)) = current.take() {
+                if !name.is_empty() {
+                    out.push((name, map));
+                }
+            }
+            let section = &trimmed[1..trimmed.len() - 1];
+            if let Some(rest) = section.strip_prefix("model_providers.") {
+                current = Some((rest.trim().to_string(), HashMap::new()));
+            } else {
+                current = None;
+            }
+            continue;
+        }
+        // section 内的 key = value
+        if let Some((_, map)) = current.as_mut() {
+            if let Some(eq) = trimmed.find('=') {
+                let key = trimmed[..eq].trim().to_string();
+                let raw_val = trimmed[eq + 1..].trim();
+                // 去除引号
+                let value = raw_val
+                    .trim_start_matches('"')
+                    .trim_end_matches('"')
+                    .trim_start_matches('\'')
+                    .trim_end_matches('\'')
+                    .to_string();
+                map.insert(key, value);
+            }
+        }
+    }
+    // 提交最后一个
+    if let Some((name, map)) = current {
+        if !name.is_empty() {
+            out.push((name, map));
+        }
+    }
+    out
+}
 
 pub struct CodexCliProbe;
 

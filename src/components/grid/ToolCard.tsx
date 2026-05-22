@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { ToolDef } from "./tools.config";
 
@@ -13,6 +14,10 @@ import type { ToolDef } from "./tools.config";
  */
 export function ToolCard({ tool }: { tool: ToolDef }) {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  // 工具名走 i18n（key: tools.<id>），fallback 用 hardcoded label
+  const i18nKey = `tools.${tool.id}`;
+  const label = i18n.exists(i18nKey) ? t(i18nKey) : tool.label;
   const [hovered, setHovered] = useState(false);
   const isSoon = tool.status === "coming_soon";
   const isAdd = tool.id === "more";
@@ -60,7 +65,7 @@ export function ToolCard({ tool }: { tool: ToolDef }) {
       {/* Text */}
       <div className="mt-auto pt-2.5">
         <div className="font-semibold text-[13.5px] leading-tight tracking-tight text-text">
-          {tool.label}
+          {label}
         </div>
         <div className="font-mono text-[10.5px] text-text-dim leading-snug mt-0.5">
           {tool.description}

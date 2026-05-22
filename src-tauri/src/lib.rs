@@ -153,6 +153,10 @@ pub fn run() {
             commands::assignments::assign_channel,
             commands::assignments::unassign_channel,
             commands::assignments::replace_agent_channels,
+            // 从 Agent 配置反向导入渠道
+            commands::import_channels::list_importable_platforms,
+            commands::import_channels::scan_importable_channels,
+            commands::import_channels::import_channels_batch,
             // scan
             commands::scan::get_scan_items,
             commands::scan::start_scan_run,

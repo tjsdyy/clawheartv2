@@ -24,7 +24,7 @@ pub struct UnknownPlatform;
 /// 已知平台的目录名（不含前导点），用于在扫描中跳过。
 const KNOWN_PLATFORM_DIRS: &[&str] = &[
     "claude", "codex", "cursor", "gemini", "windsurf",
-    "openclaw", "openeva",
+    "openclaw", "openeva", "hermes",
 ];
 
 /// 系统/工具链/常见非 AI 目录黑名单。

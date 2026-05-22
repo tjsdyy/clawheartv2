@@ -5,6 +5,7 @@ pub mod agent_decisions;
 pub mod agents;
 pub mod assignments;
 pub mod auth;
+pub mod import_channels;
 pub mod budget;
 pub mod danger;
 pub mod intercept;

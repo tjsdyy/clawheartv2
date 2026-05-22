@@ -38,8 +38,10 @@ import {
   Settings,
   History,
   Zap,
+  Download,
 } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
   useAgents,
@@ -64,6 +66,7 @@ import { AddChannelDialog } from "@/components/agents/AddChannelDialog";
 import { BrandIcon } from "@/components/agents/BrandIcon";
 import { AgentHistoryDrawer } from "@/components/agents/AgentHistoryDrawer";
 import { SelectChannelDialog } from "@/components/agents/SelectChannelDialog";
+import { ImportFromAgentDialog } from "@/components/agents/ImportFromAgentDialog";
 import { useAgentChannels } from "@/hooks/useChannelAssignments";
 import { toast } from "sonner";
 import { PROVIDER_PRESETS, type ProviderPreset } from "@/data/provider-presets";
@@ -128,6 +131,7 @@ function platformColorKey(platform: string): string {
 // 主组件
 // ──────────────────────────────────────────────────────────────────
 export function AgentsTool() {
+  const { t } = useTranslation();
   const { data: agents = [], isLoading } = useAgents();
   const { data: profiles = [] } = useProviderProfiles();
   const rediscover = useRediscoverAgents();
@@ -146,6 +150,7 @@ export function AgentsTool() {
   const [candidatesOpen, setCandidatesOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [selectOpen, setSelectOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
 
@@ -229,7 +234,7 @@ export function AgentsTool() {
               rediscover.isPending && "animate-spin",
             )}
           />
-          重新发现
+          {t("agents.rediscover")}
         </button>
       </header>
 
@@ -252,6 +257,7 @@ export function AgentsTool() {
             onSelectFromLibrary={() => setSelectOpen(true)}
             onCreateNew={() => setAddOpen(true)}
             onOpenHistory={() => setHistoryOpen(true)}
+            onOpenImport={() => setImportOpen(true)}
             onApply={(id) => setWizardProfileId(id)}
             onEdit={(id) => setEditingProfileId(id)}
           />
@@ -335,6 +341,14 @@ export function AgentsTool() {
           onClose={() => setHistoryOpen(false)}
         />
       )}
+
+      {/* 从 Agent 配置反向导入渠道 */}
+      {importOpen && activeAgent && (
+        <ImportFromAgentDialog
+          agent={activeAgent}
+          onClose={() => setImportOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -354,13 +368,15 @@ function AgentTab({
   taken: boolean;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   const colorKey = platformColorKey(agent.platform);
   const initial = agent.agent_name.charAt(0);
+  const importable = IMPORTABLE_PLATFORMS.has(agent.platform);
   return (
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12.5px] font-medium whitespace-nowrap transition-colors",
+        "relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12.5px] font-medium whitespace-nowrap transition-colors",
         active
           ? "bg-bg-elev2 text-text shadow-sm"
           : "text-text-muted hover:text-text hover:bg-bg-elev",
@@ -380,6 +396,16 @@ function AgentTab({
         {initial}
       </span>
       <span>{platformLabel(agent.platform)}</span>
+      {/* 可导入角标：内联，明显 accent 色 chip + 白色文字 */}
+      {importable && (
+        <span
+          className="inline-flex items-center px-1.5 h-[15px] rounded-full text-[9px] font-bold text-white shadow-sm leading-none whitespace-nowrap flex-shrink-0"
+          style={{ background: "rgb(var(--accent))" }}
+          title={t("agents.badge_importable")}
+        >
+          {t("agents.badge_importable")}
+        </span>
+      )}
       {/* 托管状态点：绿色=已托管，灰色=未托管 */}
       <span
         className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -388,7 +414,7 @@ function AgentTab({
             ? "rgb(16, 185, 129)"
             : "rgb(var(--text-muted) / 0.4)",
         }}
-        title={taken ? "已托管" : "未托管"}
+        title={taken ? t("agents.tab_taken_tooltip") : t("agents.tab_untaken_tooltip")}
       />
       {agent.status === "config_broken" && (
         <AlertTriangle className="w-3 h-3 text-critical" />
@@ -675,6 +701,7 @@ function AssignedChannelList({
   onSelectFromLibrary,
   onCreateNew,
   onOpenHistory,
+  onOpenImport,
   onApply,
   onEdit,
 }: {
@@ -685,6 +712,7 @@ function AssignedChannelList({
   onSelectFromLibrary: () => void;
   onCreateNew: () => void;
   onOpenHistory: () => void;
+  onOpenImport: () => void;
   onApply: (id: string) => void;
   onEdit: (id: string) => void;
 }) {
@@ -718,6 +746,7 @@ function AssignedChannelList({
         onSelectFromLibrary={onSelectFromLibrary}
         onCreateNew={onCreateNew}
         onOpenHistory={onOpenHistory}
+        onOpenImport={onOpenImport}
       />
 
       {/* 已分配列表 */}
@@ -752,6 +781,17 @@ function AssignedChannelList({
 // ──────────────────────────────────────────────────────────────────
 // Agent 工具栏（信息 + 托管开关 + 操作）
 // ──────────────────────────────────────────────────────────────────
+// 支持反向导入的平台白名单（与后端 IMPORTABLE_PLATFORMS 一致；不支持的也显示按钮但 Dialog 内提示）
+const IMPORTABLE_PLATFORMS = new Set([
+  "openclaw",
+  "openeva",
+  "opencode",
+  "hermes",
+  "claude",
+  "codex",
+  "gemini",
+]);
+
 function AgentToolbar({
   agent,
   currentChannelName,
@@ -760,6 +800,7 @@ function AgentToolbar({
   onSelectFromLibrary,
   onCreateNew,
   onOpenHistory,
+  onOpenImport,
 }: {
   agent: DiscoveredAgent;
   currentChannelName: string | null;
@@ -768,7 +809,9 @@ function AgentToolbar({
   onSelectFromLibrary: () => void;
   onCreateNew: () => void;
   onOpenHistory: () => void;
+  onOpenImport: () => void;
 }) {
+  const { t } = useTranslation();
   const agentId = `${agent.platform}/${agent.agent_name}`;
   const { data: batches = [] } = useApplyBatches();
   const { data: applyReal } = useApplyRealStatus();
@@ -856,27 +899,33 @@ function AgentToolbar({
       <button
         onClick={onSelectFromLibrary}
         className="flex items-center gap-1 px-2.5 py-1 text-[11.5px] rounded border border-border hover:border-text-muted text-text-dim bg-bg-elev"
-        title="从全局渠道库挑选渠道分配给本 Agent"
       >
         <ChevronRight className="w-3 h-3" />
-        从渠道库选择
+        {t("agents.toolbar_select_from_library")}
       </button>
       <button
         onClick={onCreateNew}
         className="flex items-center gap-1 px-2.5 py-1 text-[11.5px] rounded border border-border hover:border-text-muted text-text-dim bg-bg-elev"
-        title="新建渠道并自动分配给本 Agent"
       >
         <Plus className="w-3 h-3" />
-        新建
+        {t("agents.toolbar_create_new")}
       </button>
+      {IMPORTABLE_PLATFORMS.has(agent.platform) && (
+        <button
+          onClick={onOpenImport}
+          className="flex items-center gap-1 px-2.5 py-1 text-[11.5px] rounded border border-accent/30 hover:border-accent text-accent bg-accent/5"
+        >
+          <Download className="w-3 h-3" />
+          {t("agents.toolbar_import_from_config")}
+        </button>
+      )}
       <button
         onClick={onOpenHistory}
         disabled={totalChanges === 0}
         className="flex items-center gap-1 px-2.5 py-1 text-[11.5px] rounded border border-border hover:border-text-muted text-text-dim bg-bg-elev disabled:opacity-50 disabled:cursor-not-allowed"
-        title={totalChanges === 0 ? "暂无托管历史" : "查看托管/回滚历史"}
       >
         <History className="w-3 h-3" />
-        托管历史
+        {t("agents.toolbar_history")}
         {totalChanges > 0 && (
           <span className="text-text-muted">{totalChanges}</span>
         )}
@@ -884,7 +933,7 @@ function AgentToolbar({
 
       {!realEnabled && taken && (
         <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
-          Dry-run
+          {t("takeover.dry_run")}
         </span>
       )}
     </div>
@@ -903,6 +952,7 @@ function TakeoverToggle({
   loading: boolean;
   onClick: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <button
       onClick={onClick}
@@ -935,10 +985,10 @@ function TakeoverToggle({
         ) : taken ? (
           <>
             <Zap className="w-3 h-3 inline -mt-0.5 mr-0.5" />
-            已托管
+            {t("takeover.managed")}
           </>
         ) : (
-          "未托管"
+          t("takeover.unmanaged")
         )}
       </span>
     </button>

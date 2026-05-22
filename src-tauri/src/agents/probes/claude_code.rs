@@ -10,6 +10,7 @@
 //! Claude Code 使用 settings.json 的 env 段注入环境变量（参考 v1 配置）
 
 use crate::agents::config_probe::*;
+use crate::agents::probes::ChannelCandidate;
 use crate::agents::DiscoveredAgent;
 use std::path::PathBuf;
 
@@ -17,6 +18,51 @@ pub struct ClaudeCodeProbe;
 
 const PATH_BASE_URL: &str = "env.ANTHROPIC_BASE_URL";
 const PATH_API_KEY: &str = "env.ANTHROPIC_API_KEY";
+
+/// 从 ~/.claude/settings.json 提取唯一的 anthropic 渠道（单 provider）
+pub fn extract_channels(agent_id: &str) -> Vec<ChannelCandidate> {
+    let Some(path) = home_dir().map(|h| h.join(".claude/settings.json")) else {
+        return vec![];
+    };
+    let Ok(content) = std::fs::read_to_string(&path) else { return vec![]; };
+    let Ok(v) = serde_json::from_str::<serde_json::Value>(&content) else { return vec![]; };
+
+    let env = v.get("env").and_then(|e| e.as_object());
+    let base_url = env
+        .and_then(|e| e.get("ANTHROPIC_BASE_URL"))
+        .and_then(|s| s.as_str())
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string());
+    let Some(base_url) = base_url else { return vec![]; };
+
+    let api_key = env
+        .and_then(|e| {
+            e.get("ANTHROPIC_AUTH_TOKEN")
+                .or_else(|| e.get("ANTHROPIC_API_KEY"))
+        })
+        .and_then(|s| s.as_str())
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string());
+
+    let mut warnings = Vec::new();
+    if api_key.is_none() {
+        warnings.push("env 中未找到 ANTHROPIC_AUTH_TOKEN，导入后需手动配置".into());
+    }
+
+    vec![ChannelCandidate {
+        id: "claude:anthropic".to_string(),
+        name: "Anthropic".to_string(),
+        source_agent_id: agent_id.to_string(),
+        source_platform: "claude".to_string(),
+        base_url,
+        api_key,
+        protocol: "anthropic".to_string(),
+        default_model: None,
+        provider_kind: "anthropic".to_string(),
+        already_exists: false,
+        warnings,
+    }]
+}
 
 fn settings_path() -> Option<PathBuf> {
     home_dir().map(|h| h.join(".claude/settings.json"))

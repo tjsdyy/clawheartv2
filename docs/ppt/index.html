@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ClawHeart · 新手 30 分钟上手指南</title>
+<style>
+  /* ─────────── Reset + 基础 ─────────── */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI",
+                 system-ui, "Helvetica Neue", sans-serif;
+    background: #0a0e14;
+    color: #d4d4d8;
+    line-height: 1.55;
+    user-select: none;
+  }
+
+  /* ─────────── 全局背景动效 ─────────── */
+  .deck {
+    position: relative;
+    width: 100%; height: 100%;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(125,211,252,0.06), transparent),
+      radial-gradient(ellipse 60% 80% at 90% 90%, rgba(168,85,247,0.05), transparent),
+      linear-gradient(180deg, #0a0e14 0%, #14181f 100%);
+  }
+  .deck::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(125,211,252,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(125,211,252,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    padding: 40px 56px 80px 56px;
+  }
+  .slide.active {
+    display: flex;
+    animation: slidein 0.45s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes slidein {
+    from { opacity: 0; transform: translateX(20px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* ─────────── 标题与副标题 ─────────── */
+  .slide h1 {
+    font-size: 52px; font-weight: 800; margin: 0 0 14px 0;
+    background: linear-gradient(135deg, #7dd3fc 0%, #a5b4fc 50%, #f0abfc 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+  .slide h2 {
+    font-size: 26px; font-weight: 700; margin: 0 0 6px 0; color: #f4f4f5;
+    letter-spacing: -0.3px;
+    animation: fadein 0.5s 0.1s both;
+  }
+  .slide h2 .chapter {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    background: linear-gradient(135deg, rgba(125,211,252,0.18), rgba(168,85,247,0.18));
+    color: #7dd3fc;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-right: 12px;
+    vertical-align: 3px;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(125,211,252,0.25);
+  }
+  .slide h2 .must {
+    background: rgba(239,68,68,0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239,68,68,0.3);
+    font-size: 10.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    vertical-align: 3px;
+  }
+  .slide h2 .opt {
+    background: rgba(168,85,247,0.12);
+    color: #c4b5fd;
+    border: 1px solid rgba(168,85,247,0.3);
+    font-size: 10.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    vertical-align: 3px;
+  }
+  .slide .subtitle {
+    font-size: 14.5px; color: #71717a; margin: 0 0 22px 0;
+    animation: fadein 0.5s 0.15s both;
+  }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ─────────── 主 body：左大图，右窄文 ─────────── */
+  .slide .body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr);
+    gap: 28px;
+    min-height: 0;
+    animation: fadein 0.5s 0.2s both;
+  }
+  .slide.full .body { grid-template-columns: 1fr; }
+
+  /* ─────────── 图片 + 标注 · Mac 横向适配 ─────────── */
+  .figure {
+    position: relative;
+    background:
+      radial-gradient(ellipse at center, rgba(125,211,252,0.04), transparent 70%),
+      #161b22;
+    border: 1px solid #27272a;
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow:
+      0 24px 60px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(125,211,252,0.04);
+    aspect-ratio: 16 / 10;  /* Mac 桌面应用典型比例，自适应宽度 */
+    width: 100%;
+    max-height: 100%;
+    align-self: center;
+  }
+  .figure img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  .figure .placeholder {
+    color: #52525b; font-size: 13px; text-align: center; padding: 32px;
+  }
+  .figure .placeholder code {
+    display: inline-block;
+    background: #1e293b; color: #f59e0b;
+    padding: 3px 10px; border-radius: 4px;
+    margin-top: 8px;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 12px;
+  }
+  .figure .placeholder .emoji {
+    font-size: 48px; margin-bottom: 10px; opacity: 0.6;
+  }
+
+  /* 标注：所有标注绝对定位在 .figure 上，使用百分比，与图片大小无关 */
+  .ann {
+    position: absolute;
+    pointer-events: none;
+    z-index: 2;
+    animation: annpop 0.4s 0.3s both cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes annpop {
+    from { opacity: 0; transform: scale(0.4) translate(var(--tx, 0), var(--ty, 0)); }
+    to { opacity: 1; transform: scale(1) translate(var(--tx, 0), var(--ty, 0)); }
+  }
+  /* 红色编号圆 */
+  .ann-num {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-weight: 800; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow:
+      0 0 0 3px #fff,
+      0 4px 16px rgba(239,68,68,0.7),
+      0 0 30px rgba(239,68,68,0.3);
+    --tx: -50%; --ty: -50%;
+    transform: translate(-50%, -50%);
+  }
+  /* 红色矩形高亮（带光晕） */
+  .ann-rect {
+    border: 2.5px solid #ef4444;
+    border-radius: 8px;
+    background: rgba(239,68,68,0.06);
+    box-shadow: 0 0 0 5px rgba(239,68,68,0.18), 0 0 30px rgba(239,68,68,0.2);
+    animation: rectpulse 2s ease-in-out 0.4s infinite, annpop 0.5s 0.3s both;
+  }
+  @keyframes rectpulse {
+    0%, 100% { box-shadow: 0 0 0 5px rgba(239,68,68,0.18), 0 0 20px rgba(239,68,68,0.1); }
+    50% { box-shadow: 0 0 0 10px rgba(239,68,68,0.32), 0 0 40px rgba(239,68,68,0.25); }
+  }
+  /* 浮动说明气泡 */
+  .ann-tip {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    border: 1.5px solid #fbbf24;
+    padding: 5px 11px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4), 0 0 0 1px rgba(251,191,36,0.3);
+    --tx: 0; --ty: 0;
+  }
+
+  /* ─────────── 文字说明区 ─────────── */
+  .notes {
+    overflow-y: auto; padding-right: 6px;
+    display: flex; flex-direction: column;
+    justify-content: center;
+  }
+  .notes::-webkit-scrollbar { width: 4px; }
+  .notes::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
+
+  .notes ol, .notes ul { margin: 0; padding-left: 0; list-style: none; }
+  .notes ol li {
+    position: relative;
+    padding-left: 38px;
+    margin-bottom: 13px;
+    font-size: 14.5px;
+    color: #e4e4e7;
+    animation: stepin 0.5s both;
+  }
+  .notes ol li:nth-child(1) { animation-delay: 0.3s; }
+  .notes ol li:nth-child(2) { animation-delay: 0.45s; }
+  .notes ol li:nth-child(3) { animation-delay: 0.6s; }
+  .notes ol li:nth-child(4) { animation-delay: 0.75s; }
+  .notes ol li:nth-child(5) { animation-delay: 0.9s; }
+  @keyframes stepin {
+    from { opacity: 0; transform: translateX(-12px); }
+    to { opacity: 1; transform: none; }
+  }
+  .notes ol li::before {
+    content: counter(step);
+    counter-increment: step;
+    position: absolute; left: 0; top: -1px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-size: 13px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.4);
+  }
+  .notes ol { counter-reset: step; }
+  .notes ul li {
+    padding-left: 18px; position: relative;
+    margin-bottom: 8px; font-size: 14px; color: #a1a1aa;
+    animation: stepin 0.4s both;
+  }
+  .notes ul li:nth-child(1) { animation-delay: 0.35s; }
+  .notes ul li:nth-child(2) { animation-delay: 0.5s; }
+  .notes ul li:nth-child(3) { animation-delay: 0.65s; }
+  .notes ul li:nth-child(4) { animation-delay: 0.8s; }
+  .notes ul li::before {
+    content: "▸"; position: absolute; left: 0; color: #7dd3fc;
+  }
+  .notes strong { color: #f4f4f5; font-weight: 700; }
+  .notes em { color: #c4b5fd; font-style: normal; font-weight: 600; }
+  .notes code {
+    background: linear-gradient(180deg, #1e293b, #0f172a);
+    color: #7dd3fc;
+    padding: 2px 7px; border-radius: 4px;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 12px;
+    border: 1px solid rgba(125,211,252,0.2);
+  }
+  .notes .tip, .notes .warn {
+    padding: 11px 14px;
+    border-radius: 6px;
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .notes .tip {
+    background: linear-gradient(135deg, rgba(125,211,252,0.08), rgba(168,85,247,0.04));
+    border-left: 3px solid #7dd3fc;
+    color: #bfdbfe;
+  }
+  .notes .warn {
+    background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(239,68,68,0.04));
+    border-left: 3px solid #fbbf24;
+    color: #fde68a;
+  }
+
+  /* ─────────── 封面 / 章节扉页 ─────────── */
+  .slide.cover {
+    align-items: center; justify-content: center; text-align: center;
+    padding: 80px;
+  }
+  .slide.cover .logo {
+    font-size: 110px; line-height: 1;
+    margin-bottom: 20px;
+    animation: bounce 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 12px 32px rgba(125,211,252,0.4));
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-14px) rotate(3deg); }
+  }
+  .slide.cover h1 { font-size: 80px; margin-bottom: 18px; }
+  .slide.cover .subtitle {
+    font-size: 19px; color: #a1a1aa; max-width: 760px; margin: 0 auto;
+    line-height: 1.7;
+  }
+  .slide.cover .meta-chips {
+    display: flex; gap: 12px;
+    margin-top: 36px; justify-content: center;
+    flex-wrap: wrap;
+  }
+  .slide.cover .meta-chip {
+    background: rgba(125,211,252,0.08);
+    border: 1px solid rgba(125,211,252,0.2);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 13px; color: #bfdbfe;
+  }
+  .slide.cover .footer-meta {
+    position: absolute; bottom: 50px;
+    font-size: 12.5px; color: #52525b;
+  }
+
+  /* 章节扉页 */
+  .slide.chapter-cover {
+    align-items: center; justify-content: center; text-align: center;
+    padding: 80px;
+  }
+  .slide.chapter-cover .num {
+    font-size: 200px; font-weight: 900; line-height: 1;
+    background: linear-gradient(135deg, #7dd3fc 0%, #a5b4fc 50%, #f0abfc 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.18;
+    position: absolute;
+    top: 50%; right: 12%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    animation: floaty 6s ease-in-out infinite;
+  }
+  @keyframes floaty {
+    0%, 100% { transform: translateY(-50%) rotate(-2deg); }
+    50% { transform: translateY(-58%) rotate(2deg); }
+  }
+  .slide.chapter-cover .emoji {
+    font-size: 96px; line-height: 1; margin-bottom: 24px;
+    animation: bounce 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.3));
+  }
+  .slide.chapter-cover .label {
+    display: inline-block;
+    background: rgba(125,211,252,0.1);
+    color: #7dd3fc;
+    padding: 4px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    margin-bottom: 14px;
+    border: 1px solid rgba(125,211,252,0.25);
+    letter-spacing: 1.5px;
+  }
+  .slide.chapter-cover h1 {
+    font-size: 64px; margin: 0 0 16px 0;
+    letter-spacing: -1px;
+  }
+  .slide.chapter-cover .one-liner {
+    font-size: 19px; color: #d4d4d8;
+    max-width: 700px; margin: 0 auto 32px auto;
+    line-height: 1.6;
+  }
+  .slide.chapter-cover .steps-preview {
+    display: flex; gap: 12px;
+    margin-top: 28px; justify-content: center;
+    flex-wrap: wrap;
+    max-width: 800px;
+  }
+  .slide.chapter-cover .step-pill {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12.5px; color: #a1a1aa;
+    backdrop-filter: blur(4px);
+  }
+  .slide.chapter-cover .step-pill strong {
+    color: #7dd3fc; font-weight: 700; margin-right: 4px;
+  }
+  .slide.chapter-cover .time {
+    font-size: 13px; color: #71717a;
+    margin-top: 24px;
+  }
+
+  /* 产品介绍页 */
+  .slide.intro .body { grid-template-columns: 1fr; gap: 20px; align-items: center; }
+  .feature-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    margin-top: 8px;
+  }
+  .feature {
+    background:
+      linear-gradient(135deg, rgba(125,211,252,0.06), rgba(168,85,247,0.03)),
+      rgba(255,255,255,0.02);
+    border: 1px solid rgba(125,211,252,0.18);
+    border-radius: 12px;
+    padding: 22px;
+    position: relative; overflow: hidden;
+    transition: transform 0.3s;
+  }
+  .feature::before {
+    content: ""; position: absolute; top: 0; right: 0;
+    width: 80px; height: 80px;
+    background: radial-gradient(circle at top right, rgba(125,211,252,0.2), transparent);
+    opacity: 0.4;
+  }
+  .feature:hover { transform: translateY(-4px); }
+  .feature .ico { font-size: 32px; margin-bottom: 10px; line-height: 1; }
+  .feature h3 { font-size: 17px; margin: 0 0 8px 0; color: #f4f4f5; }
+  .feature p { font-size: 13px; color: #a1a1aa; margin: 0; line-height: 1.55; }
+
+  /* ─────────── 导航 / 进度条 / 目录 ─────────── */
+  .nav {
+    position: fixed; bottom: 18px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(10,14,20,0.92);
+    backdrop-filter: blur(16px);
+    border: 1px solid #27272a;
+    padding: 7px 14px;
+    border-radius: 999px;
+    z-index: 10;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+  }
+  .nav button {
+    background: none; border: none; color: #d4d4d8;
+    font-size: 13px; cursor: pointer; padding: 4px 10px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .nav button:hover { background: rgba(125,211,252,0.1); color: #7dd3fc; }
+  .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav .counter {
+    font-size: 12.5px; color: #71717a;
+    font-family: ui-monospace, monospace;
+    min-width: 70px; text-align: center;
+  }
+  .progress {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 3px; background: #1e293b;
+    z-index: 11;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #7dd3fc, #a5b4fc, #f0abfc);
+    transition: width 0.4s ease;
+    box-shadow: 0 0 12px rgba(125,211,252,0.6);
+  }
+  .toc-button {
+    position: fixed; top: 14px; right: 22px;
+    background: rgba(10,14,20,0.92);
+    backdrop-filter: blur(12px);
+    color: #d4d4d8; border: 1px solid #27272a;
+    padding: 6px 12px; border-radius: 8px;
+    font-size: 12.5px; cursor: pointer;
+    z-index: 10;
+  }
+  .toc-button:hover { color: #7dd3fc; border-color: rgba(125,211,252,0.3); }
+  .toc-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 20; display: none;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+    animation: fadein 0.2s;
+  }
+  .toc-overlay.show { display: flex; }
+  .toc-panel {
+    background: #14181f;
+    border: 1px solid #27272a;
+    border-radius: 14px;
+    padding: 28px; min-width: 520px; max-width: 720px;
+    max-height: 82vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .toc-panel h3 { color: #f4f4f5; margin: 0 0 18px 0; font-size: 20px; }
+  .toc-panel ol { margin: 0; padding-left: 22px; color: #a1a1aa; }
+  .toc-panel ol li {
+    padding: 6px 8px; cursor: pointer; font-size: 13.5px;
+    border-radius: 4px; transition: all 0.15s;
+  }
+  .toc-panel ol li:hover {
+    color: #7dd3fc; background: rgba(125,211,252,0.06);
+  }
+  .toc-panel .chapter-head {
+    margin-top: 16px;
+    color: #71717a;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    padding-left: 0;
+  }
+  .toc-panel .chapter-head .emoji { margin-right: 8px; }
+  .toc-panel .chapter-head:first-of-type { margin-top: 0; }
+
+  /* 打印 */
+  @media print {
+    .nav, .progress, .toc-button, .toc-overlay { display: none !important; }
+    .slide { display: flex !important; page-break-after: always; position: relative; height: auto; min-height: 100vh; animation: none !important; }
+    .deck::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- ═══════════════ 封面 ═══════════════ -->
+  <section class="slide cover">
+    <div class="logo">🐾</div>
+    <h1>ClawHeart</h1>
+    <p class="subtitle">
+      30 分钟，从零上手本机 AI Agent 安全代理。<br/>
+      装上它，所有的 Kimi / DeepSeek / Claude / Cursor 都在你手心里。
+    </p>
+    <div class="meta-chips">
+      <div class="meta-chip">⏱ 必学路径 15 分钟</div>
+      <div class="meta-chip">🎯 6 个核心场景</div>
+      <div class="meta-chip">📦 9 个章节</div>
+    </div>
+    <div class="footer-meta">按 <strong>→</strong> 翻页 · <strong>T</strong> 看目录 · 鼠标右侧点击下一页</div>
+  </section>
+
+  <!-- ═══════════════ 产品介绍 ═══════════════ -->
+  <section class="slide intro full">
+    <h2><span class="chapter">导览</span>ClawHeart 干啥的？</h2>
+    <p class="subtitle">一句话：<em>把你电脑上各种 AI 工具的 API 凭据 + 流量管理统一起来</em>，再也不用每个工具填一次 key 了。</p>
+    <div class="body">
+      <div class="feature-grid">
+        <div class="feature">
+          <div class="ico">🛰</div>
+          <h3>自动雷达扫描</h3>
+          <p>启动就发现本机所有 AI 工具，Claude Code、OpenClaw、Cursor、Codex…7 种主流平台都认识，连"未知 Agent"都能从 <code>skills/</code> 目录线索揪出来。</p>
+        </div>
+        <div class="feature">
+          <div class="ico">🔑</div>
+          <h3>渠道统一池</h3>
+          <p>65 个主流供应商预设 +一键反向导入功能 = 30 秒把 OpenClaw 里的所有渠道复制到 ClawHeart。Kimi 的 key 填一次，Claude 和 Cursor 都能用。</p>
+        </div>
+        <div class="feature">
+          <div class="ico">⚡</div>
+          <h3>一键托管 + 后悔药</h3>
+          <p>开关一拧，ClawHeart 改写 Agent 的 <code>base_url</code>，但原值<strong>持久化备份</strong>。后悔了？一键还原，配置文件零损坏。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 章节 1 扉页 ═══════════════ -->
+  <section class="slide chapter-cover">
+    <div class="num">01</div>
+    <div class="emoji">📦</div>
+    <div class="label">CHAPTER 1 · 4 步</div>
+    <h1>先把它装起来</h1>
+    <p class="one-liner">下载 DMG → 拖进 Applications → 应付 macOS 那个"不认识开发者"的提示。</p>
+    <div class="steps-preview">
+      <div class="step-pill"><strong>1</strong>双击 DMG</div>
+      <div class="step-pill"><strong>2</strong>拖进 Applications</div>
+      <div class="step-pill"><strong>3</strong>首次启动警告</div>
+      <div class="step-pill"><strong>4</strong>系统设置允许</div>
+    </div>
+    <div class="time">⏱ 预计 3 分钟 · 必学 ★</div>
+  </section>
+
+  <section class="slide" data-figure="01-install-dmg.png">
+    <h2><span class="chapter">1.1</span>双击 DMG，开盲盒 🎁<span class="must">必学</span></h2>
+    <p class="subtitle">下载的 <code>ClawHeart_2.0.0-alpha.0_*.dmg</code> 双击打开，里面就两个图标，一目了然。</p>
+    <div class="body">
+      <div class="figure" data-figure="01-install-dmg.png">
+        <div class="ann ann-num" style="top: 50%; left: 30%;">1</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>下载对应芯片的 DMG（M 系列选 <code>aarch64</code>，Intel 选 <code>x64</code>）</li>
+          <li>下载完成后<strong>双击</strong> DMG 文件</li>
+          <li>等几秒，安装窗口就跳出来</li>
+        </ol>
+        <div class="tip">💡 不确定自己 Mac 是什么芯片？左上角苹果 → "关于本机" 看一眼。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="02-drag-to-applications.png">
+    <h2><span class="chapter">1.2</span>拖一拖，搞定 ✨<span class="must">必学</span></h2>
+    <p class="subtitle">macOS 标准操作：左边是 App，右边是 Applications 的快捷方式，拖过去就行。</p>
+    <div class="body">
+      <div class="figure" data-figure="02-drag-to-applications.png">
+        <div class="ann ann-num" style="top: 50%; left: 25%;">1</div>
+        <div class="ann ann-num" style="top: 50%; left: 75%;">2</div>
+        <div class="ann ann-tip" style="top: 78%; left: 50%; transform: translate(-50%, 0);">📦 从左拖到右</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>按住左边的 ClawHeart 图标</li>
+          <li>拖到右边 Applications 文件夹松手</li>
+          <li>关闭这个窗口，安装完成 ✅</li>
+        </ol>
+        <div class="tip">💡 之后在 Launchpad 或 <code>/Applications</code> 都能找到它。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="03-launch-warning.png">
+    <h2><span class="chapter">1.3</span>等等，别慌 😅<span class="must">必学</span></h2>
+    <p class="subtitle">第一次双击启动，macOS 会冒出"无法验证开发者"。<strong>不是 bug</strong>，是系统对没花 99 美元买证书的 App 的常规警告。</p>
+    <div class="body">
+      <div class="figure" data-figure="03-launch-warning.png">
+        <div class="ann ann-rect" style="top: 28%; left: 18%; width: 64%; height: 32%;"></div>
+        <div class="ann ann-tip" style="top: 70%; left: 50%; transform: translate(-50%, 0);">点「完成」→ 去系统设置救场</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>双击 ClawHeart 启动</li>
+          <li>看到这个吓人的弹窗</li>
+          <li>点<strong>「完成」</strong>关闭 ← 千万别点删除！</li>
+        </ol>
+        <div class="warn">⚠ v2 alpha 还没做 Apple 公证。GA 版本会签名，这步会消失。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="04-allow-in-settings.png">
+    <h2><span class="chapter">1.4</span>系统设置里说声 OK 👌<span class="must">必学</span></h2>
+    <p class="subtitle">macOS 13+ 在「隐私与安全性」最底部点「仍要打开」就行。</p>
+    <div class="body">
+      <div class="figure" data-figure="04-allow-in-settings.png">
+        <div class="ann ann-num" style="top: 55%; left: 50%;">1</div>
+        <div class="ann ann-rect" style="top: 48%; left: 28%; width: 44%; height: 14%;"></div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li><code>Cmd+Space</code> 搜 "系统设置" 打开</li>
+          <li>左侧选「隐私与安全性」</li>
+          <li>下拉到最底部 → 看到 "已阻止 ClawHeart..."</li>
+          <li>点<strong>「仍要打开」</strong>，输密码或 Touch ID</li>
+        </ol>
+        <div class="tip">💡 懒人路径：终端跑 <code>xattr -dr com.apple.quarantine /Applications/ClawHeart.app</code> 一键搞定</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 章节 2 扉页 ═══════════════ -->
+  <section class="slide chapter-cover">
+    <div class="num">02</div>
+    <div class="emoji">🚀</div>
+    <div class="label">CHAPTER 2 · 3 步</div>
+    <h1>首次启动，认识下主页</h1>
+    <p class="one-liner">引导 → 选个监控模式（不重要，回头能改）→ 看看主页都有啥。</p>
+    <div class="steps-preview">
+      <div class="step-pill"><strong>5</strong>欢迎页</div>
+      <div class="step-pill"><strong>6</strong>选监控模式</div>
+      <div class="step-pill"><strong>7</strong>主页导览</div>
+    </div>
+    <div class="time">⏱ 预计 2 分钟 · 必学 ★</div>
+  </section>
+
+  <section class="slide" data-figure="05-onboarding-welcome.png">
+    <h2><span class="chapter">2.1</span>欢迎页 👋<span class="must">必学</span></h2>
+    <p class="subtitle">就 3 屏引导，承诺：<em>所有数据本地存储，不上传任何云端</em>。</p>
+    <div class="body">
+      <div class="figure" data-figure="05-onboarding-welcome.png">
+        <div class="ann ann-num" style="bottom: 14%; right: 14%;">1</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>读一下欢迎页内容</li>
+          <li>右下角「下一步」继续</li>
+        </ol>
+        <div class="tip">💡 引导期间它正在后台扫描你的电脑，准备好 Agent 列表给你看。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="06-onboarding-tier.png">
+    <h2><span class="chapter">2.2</span>挑个模式，懒人选最左 🎯<span class="must">必学</span></h2>
+    <p class="subtitle">三档：可逆 vs 全覆盖 vs 强隔离。新手 → 最左边「端点映射」无脑选就行。</p>
+    <div class="body">
+      <div class="figure" data-figure="06-onboarding-tier.png">
+        <div class="ann ann-rect" style="top: 28%; left: 4%; width: 30%; height: 58%;"></div>
+        <div class="ann ann-tip" style="top: 22%; left: 19%; transform: translate(-50%, 0);">⭐ 推荐起始</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>看 3 张卡片：<strong>端点映射 / 系统代理 / 沙箱隔离</strong></li>
+          <li>选最左边「端点映射」←</li>
+          <li>点「选择此模式」</li>
+        </ol>
+        <div class="tip">💡 选错了？没关系，进了主页随时能切换，不是终身决定。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="07-home-hero.png">
+    <h2><span class="chapter">2.3</span>到主页啦！欢迎来到 ClawHeart 🏠<span class="must">必学</span></h2>
+    <p class="subtitle">中间那个动态防御示意图很酷对吧？但你主要会用<strong>底栏的 7 个卡片</strong>。</p>
+    <div class="body">
+      <div class="figure" data-figure="07-home-hero.png">
+        <div class="ann ann-rect" style="bottom: 10%; left: 4%; width: 92%; height: 22%;"></div>
+        <div class="ann ann-tip" style="bottom: 35%; left: 50%; transform: translate(-50%, 0);">底栏 7 个工具卡片 ← 主战场</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>上方 Hero 动画展示 ClawHeart 的 8 层防御（看着玩就行）</li>
+          <li>右上角紫色 chip = 当前监控模式（可切换）</li>
+          <li>底栏 7 张卡片：Agent 发现 / 实时监控 / 安全扫描 / 技能管理 / 渠道管理 / 用量统计 / 设置</li>
+          <li><strong>下一步：</strong>点最左边「Agent 发现」</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 章节 3 扉页 ═══════════════ -->
+  <section class="slide chapter-cover">
+    <div class="num">03</div>
+    <div class="emoji">🔍</div>
+    <div class="label">CHAPTER 3 · 3 步</div>
+    <h1>看看 ClawHeart 找到了啥</h1>
+    <p class="one-liner">已发现的 Agent 列在顶部 tabs，还有"候选 Agent"区会显示你电脑上其他疑似 AI 工具。</p>
+    <div class="steps-preview">
+      <div class="step-pill"><strong>8</strong>已发现列表</div>
+      <div class="step-pill"><strong>9</strong>候选区折叠</div>
+      <div class="step-pill"><strong>10</strong>纳入 / 忽略</div>
+    </div>
+    <div class="time">⏱ 预计 2 分钟 · 必学 ★</div>
+  </section>
+
+  <section class="slide" data-figure="08-agents-page.png">
+    <h2><span class="chapter">3.1</span>顶部 tab = 已发现的 Agent 👥<span class="must">必学</span></h2>
+    <p class="subtitle">ClawHeart 已经偷偷扫描完你电脑了，结果都在顶部 tabs。</p>
+    <div class="body">
+      <div class="figure" data-figure="08-agents-page.png">
+        <div class="ann ann-rect" style="top: 11%; left: 3%; width: 64%; height: 10%;"></div>
+        <div class="ann ann-tip" style="top: 24%; left: 35%; transform: translate(-50%, 0);">"可导入"角标 = 一键反向导入它的所有渠道</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>每个 tab 一个 Agent（Claude / Codex / OpenClaw / ...）</li>
+          <li>红色 <strong>"可导入"</strong> 角标 = 这个 Agent 支持反向导入</li>
+          <li>tab 末尾<strong>状态点</strong>：🟢 已托管 / ⚪ 未托管</li>
+          <li>右上「重新发现」可手动重扫</li>
+        </ol>
+        <div class="tip">💡 没看到你装的 Agent？检查是否装在标准位置（<code>~/.claude/</code> 等）</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="09-agents-candidate.png">
+    <h2><span class="chapter">3.2</span>候选区：可能是 Agent，要确认 🕵️<span class="opt">可选</span></h2>
+    <p class="subtitle">ClawHeart 在 <code>~/.xxx/</code> 隐藏目录里发现疑似 AI 配置（含 <code>skills/</code>、API key 等），列出来给你确认。</p>
+    <div class="body">
+      <div class="figure" data-figure="09-agents-candidate.png">
+        <div class="ann ann-rect" style="bottom: 10%; left: 3%; width: 94%; height: 42%;"></div>
+        <div class="ann ann-tip" style="top: 10%; right: 20%;">智能启发式扫描发现的可疑目录</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>页面底部点折叠箭头展开「候选 Agent」</li>
+          <li>每个候选下方列「发现线索」（<code>mcp.json</code> / <code>*.env</code> / <code>skills/</code> 等）</li>
+        </ol>
+        <div class="tip">💡 这是 ClawHeart 的"漏网之鱼检测"，主流 Agent 已经放进顶部 tabs 了。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="10-agents-confirm.png">
+    <h2><span class="chapter">3.3</span>纳入 or 忽略 · 一锤定音 ⚖️<span class="opt">可选</span></h2>
+    <p class="subtitle">真 Agent → 纳入；误识别 → 忽略，下次扫描不再骚扰你。</p>
+    <div class="body">
+      <div class="figure" data-figure="10-agents-confirm.png">
+        <div class="ann ann-num" style="top: 50%; right: 14%;">1</div>
+        <div class="ann ann-num" style="top: 50%; right: 6%;">2</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>对每个候选判断：是真 Agent → <strong>纳入管理</strong></li>
+          <li>不是 → <strong>忽略</strong>，永久跳过</li>
+          <li>纳入后会出现在顶部 tabs 里</li>
+        </ol>
+        <div class="warn">⚠ 决策会保存到本地数据库，重启后仍生效。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 章节 4 扉页 ═══════════════ -->
+  <section class="slide chapter-cover">
+    <div class="num">04</div>
+    <div class="emoji">🔑</div>
+    <div class="label">CHAPTER 4 · 5 步</div>
+    <h1>建立你的渠道库</h1>
+    <p class="one-liner">渠道 = 一个 LLM API 的凭据（Base URL + Key）。65 个预设秒选，一次配置多 Agent 共享。</p>
+    <div class="steps-preview">
+      <div class="step-pill"><strong>11</strong>空状态</div>
+      <div class="step-pill"><strong>12</strong>选预设</div>
+      <div class="step-pill"><strong>13</strong>填 Key</div>
+      <div class="step-pill"><strong>14</strong>渠道列表</div>
+      <div class="step-pill"><strong>15</strong>分配给 Agent</div>
+    </div>
+    <div class="time">⏱ 预计 5 分钟 · 必学 ★</div>
+  </section>
+
+  <section class="slide" data-figure="11-providers-empty.png">
+    <h2><span class="chapter">4.1</span>渠道库初次打开是空的 📭<span class="must">必学</span></h2>
+    <p class="subtitle">点底栏「渠道管理」卡片进入，会看到一个邀请你建第一个渠道的页面。</p>
+    <div class="body">
+      <div class="figure" data-figure="11-providers-empty.png">
+        <div class="ann ann-num" style="top: 58%; left: 50%;">1</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>主页底栏 → 点「渠道管理」</li>
+          <li>空状态居中提示「渠道库为空」</li>
+          <li>点<strong>「+ 创建第一个渠道」</strong></li>
+        </ol>
+        <div class="tip">💡 渠道是<em>全局资源</em>，可以分配给多个 Agent 共享。Kimi 的 key 填一次，Claude 和 Cursor 都能用。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="12-add-channel-presets.png">
+    <h2><span class="chapter">4.2</span>从 65 个预设里挑一个 🎨<span class="must">必学</span></h2>
+    <p class="subtitle">官方 / 国内大厂 / 云服务 / 聚合路由 / 第三方 / 自定义，6 个分类全收。</p>
+    <div class="body">
+      <div class="figure" data-figure="12-add-channel-presets.png">
+        <div class="ann ann-rect" style="top: 20%; left: 4%; width: 92%; height: 48%;"></div>
+        <div class="ann ann-tip" style="top: 72%; left: 50%; transform: translate(-50%, 0);">⭐ 是当前 Agent 推荐项 · 优先排在前面</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>页面分 6 个区：<strong>官方 / 国内 / 云服务 / 聚合 / 第三方 / 自定义</strong></li>
+          <li>常用：DeepSeek、Kimi、Zhipu GLM、阿里通义、OpenRouter、PackyCode</li>
+          <li>⭐ 角标 = 推荐给当前 Agent 的预设</li>
+          <li>点击 → 自动填 Base URL（无需手输）</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="13-add-channel-form.png">
+    <h2><span class="chapter">4.3</span>就填一个 API Key 🗝<span class="must">必学</span></h2>
+    <p class="subtitle">名称、Base URL 都自动填好了，你只需要把那串 <code>sk-xxx</code> 粘贴进来。</p>
+    <div class="body">
+      <div class="figure" data-figure="13-add-channel-form.png">
+        <div class="ann ann-rect" style="top: 52%; left: 4%; width: 92%; height: 14%;"></div>
+        <div class="ann ann-num" style="top: 59%; left: 11%;">1</div>
+        <div class="ann ann-num" style="bottom: 9%; right: 9%;">2</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>粘贴 API Key（如 <code>sk-xxx</code>）到 API Key 框</li>
+          <li>可选改一下"渠道名称"（如"DeepSeek 工作号"）</li>
+          <li>点底部「+ 添加」</li>
+          <li>Key 立刻加密存到 <strong>macOS Keychain</strong>，明文不留在文件系统</li>
+        </ol>
+        <div class="warn">⚠ 没 key？去对应平台官网申请：<code>platform.deepseek.com</code> / <code>platform.moonshot.cn</code> 等</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="14-providers-list.png">
+    <h2><span class="chapter">4.4</span>渠道库 · 全局视角 📚<span class="must">必学</span></h2>
+    <p class="subtitle">所有渠道一览，每条标注"分配给了哪些 Agent"，跨 Agent 共享一目了然。</p>
+    <div class="body">
+      <div class="figure" data-figure="14-providers-list.png">
+        <div class="ann ann-rect" style="top: 18%; left: 4%; width: 72%; height: 22%;"></div>
+        <div class="ann ann-tip" style="top: 17%; right: 4%;">每条显示分配的 Agent</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>列表按"是否设默认"排序</li>
+          <li>每行：品牌图标、名称+协议、已分配的 Agent</li>
+          <li>hover 行右侧出现：设默认 / 分配 / 编辑 / 删除</li>
+          <li>顶部搜索框支持名称、URL、协议过滤</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="15-manage-assignments.png">
+    <h2><span class="chapter">4.5</span>分配给多个 Agent · N:M 关系 🔗<span class="must">必学</span></h2>
+    <p class="subtitle">一个 Kimi key 同时分给 Claude + Cursor + Codex 用？没问题，勾一勾就行。</p>
+    <div class="body">
+      <div class="figure" data-figure="15-manage-assignments.png">
+        <div class="ann ann-rect" style="top: 30%; left: 12%; width: 76%; height: 35%;"></div>
+        <div class="ann ann-tip" style="top: 24%; left: 50%; transform: translate(-50%, 0);">勾选要分配给的 Agent</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>渠道库行点「分配」按钮</li>
+          <li>弹层列出所有已纳入 Agent，分"兼容"/"不兼容"两组</li>
+          <li>勾选/取消 → 点「保存」</li>
+          <li>保存后该渠道在每个 Agent tab 里立即可见</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 章节 5 扉页 ═══════════════ -->
+  <section class="slide chapter-cover">
+    <div class="num">05</div>
+    <div class="emoji">📥</div>
+    <div class="label">CHAPTER 5 · 4 步</div>
+    <h1>反向导入：偷懒利器</h1>
+    <p class="one-liner">已经在 OpenClaw / Codex / Gemini 里配过 key？让 ClawHeart 自动读取，不用重新填。</p>
+    <div class="steps-preview">
+      <div class="step-pill"><strong>16</strong>触发导入</div>
+      <div class="step-pill"><strong>17</strong>候选列表</div>
+      <div class="step-pill"><strong>18</strong>勾选导入</div>
+      <div class="step-pill"><strong>19</strong>完成</div>
+    </div>
+    <div class="time">⏱ 预计 3 分钟 · 强烈推荐 ★★</div>
+  </section>
+
+  <section class="slide" data-figure="16-import-button.png">
+    <h2><span class="chapter">5.1</span>找到「📥 从配置导入」按钮<span class="must">必学</span></h2>
+    <p class="subtitle">只有支持反向导入的 Agent tab 才显示这个按钮（带"可导入"角标的就是）。</p>
+    <div class="body">
+      <div class="figure" data-figure="16-import-button.png">
+        <div class="ann ann-rect" style="top: 17%; left: 35%; width: 25%; height: 7%;"></div>
+        <div class="ann ann-tip" style="top: 28%; left: 47%; transform: translate(-50%, 0);">仅 6 个平台支持：OpenClaw / OpenEva / OpenCode / Claude / Codex / Gemini</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>切到带"可导入"角标的 Agent tab</li>
+          <li>看顶部工具栏 → <strong>「📥 从配置导入」</strong> accent 色按钮</li>
+          <li>点它</li>
+        </ol>
+        <div class="tip">💡 不支持的 Agent（如 Cursor / Windsurf）就老老实实手动建渠道。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="17-import-dialog-candidates.png">
+    <h2><span class="chapter">5.2</span>候选清单一锅端 🍲<span class="must">必学</span></h2>
+    <p class="subtitle">ClawHeart 解析了 Agent 配置文件，把里面所有 provider 都列出来。OAuth 类还有专门提示。</p>
+    <div class="body">
+      <div class="figure" data-figure="17-import-dialog-candidates.png">
+        <div class="ann ann-rect" style="top: 22%; left: 5%; width: 90%; height: 52%;"></div>
+        <div class="ann ann-tip" style="top: 78%; left: 50%; transform: translate(-50%, 0);">已在 ClawHeart 库的标"已存在" / 账号登录的标"无凭据"</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>每条候选：<strong>名称 / 协议 / Base URL / 警告</strong></li>
+          <li>OAuth 账号模式（如 OpenClaw 的 kimi-coding）→ 显示警告"本机无原生 key"</li>
+          <li>已存在 ClawHeart 库的 → 自动灰显</li>
+        </ol>
+        <div class="warn">⚠ OAuth 类 Agent 的渠道 = 用户在该 Agent 里登录账号，本机就是没 key —— 导入后得手动补</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="18-import-selected.png">
+    <h2><span class="chapter">5.3</span>勾一勾，导入！🎯<span class="must">必学</span></h2>
+    <p class="subtitle">默认全部勾上（除已存在的），不想要的取消勾选即可。</p>
+    <div class="body">
+      <div class="figure" data-figure="18-import-selected.png">
+        <div class="ann ann-num" style="top: 12%; right: 18%;">1</div>
+        <div class="ann ann-num" style="bottom: 9%; right: 4%;">2</div>
+        <div class="ann ann-rect" style="bottom: 6%; left: 5%; width: 32%; height: 6%;"></div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>勾选要导入的（左侧复选框）</li>
+          <li>底部 <strong>「☑ 导入后自动分配给当前 Agent」</strong> 推荐勾上</li>
+          <li>点「导入 N」按钮</li>
+          <li>ClawHeart 一气呵成创建 N 个 profile + 分配关系</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="19-after-import.png">
+    <h2><span class="chapter">5.4</span>完成！渠道列表立即更新 ✅<span class="must">必学</span></h2>
+    <p class="subtitle">导入的渠道名带 <code>(from openclaw)</code> 后缀，一眼看出来源。</p>
+    <div class="body">
+      <div class="figure" data-figure="19-after-import.png">
+        <div class="ann ann-rect" style="top: 22%; left: 5%; width: 90%; height: 58%;"></div>
+        <div class="ann ann-tip" style="top: 85%; left: 50%; transform: translate(-50%, 0);">名字带 (from openclaw) = 来自反向导入</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>关闭对话框 → 回到 Agent 详情页</li>
+          <li>渠道列表新增的项带 <code>(from openclaw)</code> 后缀</li>
+          <li>有原生 key 的：可以直接「启用」</li>
+          <li>无 key 的：先「编辑」补 key 再启用</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 章节 6 扉页 ═══════════════ -->
+  <section class="slide chapter-cover">
+    <div class="num">06</div>
+    <div class="emoji">⚡</div>
+    <div class="label">CHAPTER 6 · 5 步</div>
+    <h1>一键托管 · 最爽的环节</h1>
+    <p class="one-liner">点个按钮，ClawHeart 改写 Agent 配置，base_url 指向本机反代。原值持久化备份，随时回滚。</p>
+    <div class="steps-preview">
+      <div class="step-pill"><strong>20</strong>点启用</div>
+      <div class="step-pill"><strong>21</strong>Wizard 选渠道</div>
+      <div class="step-pill"><strong>22</strong>预览 diff</div>
+      <div class="step-pill"><strong>23</strong>已托管</div>
+      <div class="step-pill"><strong>24</strong>tab 状态点</div>
+    </div>
+    <div class="time">⏱ 预计 3 分钟 · 必学 ★</div>
+  </section>
+
+  <section class="slide" data-figure="20-channel-row.png">
+    <h2><span class="chapter">6.1</span>挑一个渠道，点「启用」🎬<span class="must">必学</span></h2>
+    <p class="subtitle">必须是有凭据 + 协议匹配的渠道，点右侧 accent 色「启用」按钮。</p>
+    <div class="body">
+      <div class="figure" data-figure="20-channel-row.png">
+        <div class="ann ann-num" style="top: 50%; right: 12%;">1</div>
+        <div class="ann ann-rect" style="top: 44%; right: 5%; width: 16%; height: 14%;"></div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>找一个不带"未设凭据"chip 的渠道</li>
+          <li>点最右侧 <strong>「启用」</strong>（蓝色实心按钮）</li>
+          <li>弹出「一键覆盖 Agent」向导</li>
+        </ol>
+        <div class="tip">💡 ClawHeart 会修改 Agent 的 <code>base_url</code>，原值持久化备份。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="21-wizard-step1.png">
+    <h2><span class="chapter">6.2</span>向导第 1 步 · 确认渠道 🔒<span class="must">必学</span></h2>
+    <p class="subtitle">向导锁定了当前 Agent，已自动选中你刚才点的渠道。</p>
+    <div class="body">
+      <div class="figure" data-figure="21-wizard-step1.png">
+        <div class="ann ann-rect" style="top: 13%; left: 4%; width: 92%; height: 6%;"></div>
+        <div class="ann ann-tip" style="top: 22%; left: 50%; transform: translate(-50%, 0);">🔒 顶部锁定提示，目标已固定</div>
+        <div class="ann ann-num" style="bottom: 9%; right: 12%;">1</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>顶部蓝色横幅 <strong>「🔒 目标 Agent: ...」</strong> 确认</li>
+          <li>列表已自动选中那条渠道</li>
+          <li>点右下「下一步：预览变更」</li>
+        </ol>
+        <div class="tip">💡 步骤优化：传统 Wizard 是 4 步，这里跳过"选 Agent"直接 3 步走完。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="22-wizard-step3-diff.png">
+    <h2><span class="chapter">6.3</span>预览变更 · 看清楚再下手 👀<span class="must">必学</span></h2>
+    <p class="subtitle">Diff 视图：红色 - 即将删，绿色 + 即将写。看完心里有数才提交。</p>
+    <div class="body">
+      <div class="figure" data-figure="22-wizard-step3-diff.png">
+        <div class="ann ann-rect" style="top: 24%; left: 5%; width: 90%; height: 50%;"></div>
+        <div class="ann ann-tip" style="top: 76%; left: 50%; transform: translate(-50%, 0);">- 红 = 删除，+ 绿 = 写入</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>查看 unified diff（程序员都熟）</li>
+          <li>关键改动：<code>ANTHROPIC_BASE_URL</code> 指向 ClawHeart 反代</li>
+          <li>原值已自动备份到 snapshots 表</li>
+          <li>底部「应用 N 处变更」按钮 → 真实写入</li>
+        </ol>
+        <div class="warn">⚠ Dry-run 模式只写沙箱不动真实配置，看到"实际写入"才是真改</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="23-takeover-active.png">
+    <h2><span class="chapter">6.4</span>已托管 · 开关变绿了 ✅<span class="must">必学</span></h2>
+    <p class="subtitle">回到 Agent 详情页，工具栏左侧开关从灰变绿，显示"已托管 · 当前渠道名"。</p>
+    <div class="body">
+      <div class="figure" data-figure="23-takeover-active.png">
+        <div class="ann ann-rect" style="top: 12%; left: 3%; width: 26%; height: 6%;"></div>
+        <div class="ann ann-tip" style="top: 20%; left: 16%;">🟢 绿 = 已托管</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>工具栏开关由 ⚪ 变 🟢</li>
+          <li>当前生效的渠道名显示在工具栏</li>
+          <li>「📜 托管历史」按钮 = 看所有变更</li>
+          <li>「↺ 关闭托管」按钮 = 一键还原</li>
+        </ol>
+        <div class="tip">💡 现在你的 Agent 流量全部经过 ClawHeart 路由 + 审计。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="24-tab-status-dot.png">
+    <h2><span class="chapter">6.5</span>全局视角 · tab 末尾的小圆点 🟢<span class="opt">可选</span></h2>
+    <p class="subtitle">顶部多个 Agent tab 末尾的状态点，一眼看出哪些已托管哪些没托管。</p>
+    <div class="body">
+      <div class="figure" data-figure="24-tab-status-dot.png">
+        <div class="ann ann-rect" style="top: 11%; left: 3%; width: 64%; height: 8%;"></div>
+        <div class="ann ann-tip" style="top: 23%; left: 35%; transform: translate(-50%, 0);">🟢 绿=托管 / ⚪ 灰=未托管</div>
+      </div>
+      <div class="notes">
+        <ul>
+          <li>绿点 = 该 Agent 已由 ClawHeart 接管流量</li>
+          <li>灰点 = 该 Agent 未托管，流量直连原始上游</li>
+          <li>顶层一眼看清全局，不用一个个 tab 切换</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 章节 7 扉页 ═══════════════ -->
+  <section class="slide chapter-cover">
+    <div class="num">07</div>
+    <div class="emoji">📊</div>
+    <div class="label">CHAPTER 7 · 3 步</div>
+    <h1>监控与后悔药</h1>
+    <p class="one-liner">看请求实时流，查托管历史，一键回滚。出问题不慌。</p>
+    <div class="steps-preview">
+      <div class="step-pill"><strong>25</strong>托管历史</div>
+      <div class="step-pill"><strong>26</strong>回滚</div>
+      <div class="step-pill"><strong>27</strong>实时监控</div>
+    </div>
+    <div class="time">⏱ 预计 2 分钟 · 推荐</div>
+  </section>
+
+  <section class="slide" data-figure="25-history-drawer.png">
+    <h2><span class="chapter">7.1</span>托管历史 · 每次都有记录 📜<span class="opt">可选</span></h2>
+    <p class="subtitle">点工具栏「📜 托管历史」→ 抽屉弹出，所有变更倒序排列。</p>
+    <div class="body">
+      <div class="figure" data-figure="25-history-drawer.png">
+        <div class="ann ann-rect" style="top: 22%; left: 25%; width: 52%; height: 56%;"></div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>点工具栏「📜 托管历史」</li>
+          <li>右侧抽屉弹出</li>
+          <li>每条变更：渠道名、时间、状态（生效/已回滚）、配置路径</li>
+          <li>单条「↺ 回滚」按钮可只还原这一条</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="26-rollback-confirm.png">
+    <h2><span class="chapter">7.2</span>回滚 · 给你后悔的机会 ↺<span class="opt">可选</span></h2>
+    <p class="subtitle">所有破坏性操作都有二次确认，不会一不小心搞砸。</p>
+    <div class="body">
+      <div class="figure" data-figure="26-rollback-confirm.png">
+        <div class="ann ann-rect" style="top: 38%; left: 25%; width: 52%; height: 26%;"></div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>点「回滚」→ 弹确认对话框</li>
+          <li>看清楚要还原的配置路径 + Dry-run/实际写入 标识</li>
+          <li>确认后 ClawHeart 把 <code>base_url</code> 还原为备份的原值</li>
+          <li>Agent 立即回到"直连原始上游"模式</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="27-monitor-realtime.png">
+    <h2><span class="chapter">7.3</span>实时监控 · 看流量流过 📡<span class="opt">可选</span></h2>
+    <p class="subtitle">首页底栏「实时监控」卡片 → ClawHeart 拦截到的所有请求一览。</p>
+    <div class="body">
+      <div class="figure" data-figure="27-monitor-realtime.png">
+        <div class="ann ann-rect" style="top: 15%; left: 3%; width: 94%; height: 70%;"></div>
+      </div>
+      <div class="notes">
+        <ul>
+          <li><strong>实时流</strong>：每秒刷新的请求列表</li>
+          <li><strong>拦截记录</strong>：被安全规则拦下的请求 + 原因</li>
+          <li><strong>Token 用量</strong>：日 / 周 / 月汇总</li>
+          <li><strong>预算</strong>：限额告警状态</li>
+        </ul>
+        <div class="tip">💡 这里看到流量 = 托管确实在工作。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 章节 8 扉页 ═══════════════ -->
+  <section class="slide chapter-cover">
+    <div class="num">08</div>
+    <div class="emoji">⚙️</div>
+    <div class="label">CHAPTER 8 · 2 步</div>
+    <h1>设置 · 改改语言</h1>
+    <p class="one-liner">10 种语言一键切，给多语言团队成员展示英文界面。</p>
+    <div class="steps-preview">
+      <div class="step-pill"><strong>28</strong>切语言</div>
+      <div class="step-pill"><strong>29</strong>英文版演示</div>
+    </div>
+    <div class="time">⏱ 预计 1 分钟 · 可选</div>
+  </section>
+
+  <section class="slide" data-figure="28-settings-language.png">
+    <h2><span class="chapter">8.1</span>切换语言 · 10 种任选 🌍<span class="opt">可选</span></h2>
+    <p class="subtitle">中 / 英 / 日 / 韩 / 德 / 法 / 西 / 葡 / 俄 / 意 一应俱全。</p>
+    <div class="body">
+      <div class="figure" data-figure="28-settings-language.png">
+        <div class="ann ann-rect" style="top: 32%; left: 5%; width: 90%; height: 18%;"></div>
+        <div class="ann ann-num" style="top: 41%; right: 10%;">1</div>
+      </div>
+      <div class="notes">
+        <ol>
+          <li>首页底栏 → 点「设置」</li>
+          <li>「通用」section → 找「语言」下拉</li>
+          <li>选 English（或任意其他）</li>
+          <li>立刻生效，不需要重启 ✨</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="29-en-ui.png">
+    <h2><span class="chapter">8.2</span>英文界面 · 给老外看 🇬🇧<span class="opt">可选</span></h2>
+    <p class="subtitle">底栏卡片、Agent 工具栏、tab 标签都翻译了。给跨语言团队演示无压力。</p>
+    <div class="body">
+      <div class="figure" data-figure="29-en-ui.png">
+        <div class="ann ann-tip" style="top: 14%; left: 50%; transform: translate(-50%, 0);">同一界面，英文版</div>
+      </div>
+      <div class="notes">
+        <ul>
+          <li>Agent Discovery / Live Monitor / Provider Library...</li>
+          <li>所有按钮、提示、对话框同步翻译</li>
+          <li>核心 30+ 字符串完整翻译</li>
+        </ul>
+        <div class="warn">⚠ v2 alpha：核心 UI 已翻，部分次要文案仍中文，后续版本补齐。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 章节 9 扉页 ═══════════════ -->
+  <section class="slide chapter-cover">
+    <div class="num">09</div>
+    <div class="emoji">🚀</div>
+    <div class="label">CHAPTER 9 · 2 步</div>
+    <h1>进阶 · 监控模式</h1>
+    <p class="one-liner">想试试系统代理或沙箱模式？看完这章就懂了。</p>
+    <div class="steps-preview">
+      <div class="step-pill"><strong>30</strong>3 档对比</div>
+      <div class="step-pill"><strong>31</strong>Tier 1 详情</div>
+    </div>
+    <div class="time">⏱ 预计 2 分钟 · 进阶</div>
+  </section>
+
+  <section class="slide" data-figure="30-access-modes.png">
+    <h2><span class="chapter">9.1</span>3 档监控模式怎么选？🎚<span class="opt">进阶</span></h2>
+    <p class="subtitle">可逆 vs 全覆盖 vs 强制隔离 —— 按场景选档。</p>
+    <div class="body">
+      <div class="figure" data-figure="30-access-modes.png">
+        <div class="ann ann-rect" style="top: 22%; left: 3%; width: 32%; height: 60%;"></div>
+        <div class="ann ann-tip" style="top: 18%; left: 18%;">⭐ 推荐起始</div>
+      </div>
+      <div class="notes">
+        <ul>
+          <li><strong>端点映射</strong>（默认）：改 Agent base_url，无证书，HTTP，可逆</li>
+          <li><strong>系统代理</strong>：装自签 CA 实现 HTTPS MITM，覆盖所有应用</li>
+          <li><strong>沙箱隔离</strong>：内核级强制约束，进程 100% 覆盖无旁路</li>
+        </ul>
+        <div class="tip">💡 个人开发 → 端点映射；团队审计 → 系统代理；不可信工具 → 沙箱</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-figure="31-tier1-detail.png">
+    <h2><span class="chapter">9.2</span>Tier 1 配置详情 🔧<span class="opt">进阶</span></h2>
+    <p class="subtitle">每档卡片内嵌完整配置面板，不用进二级菜单。</p>
+    <div class="body">
+      <div class="figure" data-figure="31-tier1-detail.png">
+        <div class="ann ann-rect" style="top: 25%; left: 5%; width: 90%; height: 66%;"></div>
+      </div>
+      <div class="notes">
+        <ul>
+          <li>反向代理端点：默认 <code>127.0.0.1:19112</code>，可改</li>
+          <li>协议适配器：勾选支持的 LLM 协议（Anthropic / OpenAI / Gemini / Ollama）</li>
+          <li>底部图解动态展示流量路径</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 总结 ═══════════════ -->
+  <section class="slide cover">
+    <div class="logo">🎉</div>
+    <h1>恭喜，已上手 ClawHeart！</h1>
+    <p class="subtitle">
+      从安装到反向导入到一键托管，你已经掌握 ClawHeart 的核心使用流程。<br/>
+      问题或反馈，欢迎随时联系。
+    </p>
+    <div class="meta-chips">
+      <div class="meta-chip">⏱ 完成 31 步</div>
+      <div class="meta-chip">🎯 9 个章节</div>
+      <div class="meta-chip">🐾 现在去探索吧</div>
+    </div>
+    <div class="footer-meta">ClawHeart Desktop · v2.0 alpha · 谢谢使用</div>
+  </section>
+
+</div>
+
+<!-- 进度条 + 导航 + 目录 -->
+<div class="progress"><div class="progress-bar" id="bar"></div></div>
+<button class="toc-button" onclick="toggleToc()">☰ 目录</button>
+<div class="nav">
+  <button onclick="prev()">◀</button>
+  <span class="counter" id="counter">1 / 42</span>
+  <button onclick="next()">▶</button>
+</div>
+
+<div class="toc-overlay" id="toc" onclick="if(event.target.id==='toc')toggleToc()">
+  <div class="toc-panel">
+    <h3>📑 目录 · 9 个章节</h3>
+    <div id="toc-list"></div>
+  </div>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let cur = 0;
+
+  function show(i) {
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === cur));
+    document.getElementById('counter').textContent = `${cur + 1} / ${slides.length}`;
+    document.getElementById('bar').style.width = `${((cur + 1) / slides.length) * 100}%`;
+
+    // 懒加载图片
+    const current = slides[cur];
+    const fig = current.querySelector('.figure[data-figure]');
+    if (fig && !fig.querySelector('img') && !fig.querySelector('.placeholder')) {
+      const name = fig.getAttribute('data-figure');
+      if (name) {
+        const img = new Image();
+        img.onerror = () => {
+          const ph = document.createElement('div');
+          ph.className = 'placeholder';
+          ph.innerHTML = `<div class="emoji">📷</div>待截图<br/><code>screenshots/${name}</code>`;
+          fig.insertBefore(ph, fig.firstChild);
+        };
+        img.onload = () => fig.insertBefore(img, fig.firstChild);
+        img.src = `screenshots/${name}`;
+      }
+    }
+  }
+  function next() { if (cur < slides.length - 1) show(cur + 1); }
+  function prev() { if (cur > 0) show(cur - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(slides.length - 1);
+    if (e.key === 't' || e.key === 'T') toggleToc();
+    if (e.key === 'Escape') document.getElementById('toc').classList.remove('show');
+  });
+
+  document.querySelector('.deck').addEventListener('click', (e) => {
+    if (e.target.closest('.nav') || e.target.closest('.toc-overlay') || e.target.closest('.toc-button')) return;
+    const x = e.clientX, w = window.innerWidth;
+    if (x < w / 3) prev(); else next();
+  });
+
+  // 构建目录
+  const tocList = document.getElementById('toc-list');
+  const chapters = {};
+  let currentChap = null;
+  slides.forEach((s, idx) => {
+    if (s.classList.contains('chapter-cover')) {
+      const label = s.querySelector('.label')?.textContent ?? '';
+      const h1 = s.querySelector('h1')?.textContent ?? '';
+      const emoji = s.querySelector('.emoji')?.textContent ?? '📍';
+      currentChap = `${emoji} ${h1}`;
+      chapters[currentChap] = [{ idx, text: '— 章节扉页 —', isCover: true }];
+      return;
+    }
+    const h2 = s.querySelector('h2');
+    if (!h2) {
+      if (idx === 0) { chapters['🐾 封面'] = [{ idx, text: 'ClawHeart 介绍' }]; }
+      else if (idx === slides.length - 1) { chapters['🎉 结束'] = [{ idx, text: '完成！' }]; }
+      else if (!currentChap) { chapters['📖 导览'] = chapters['📖 导览'] || []; chapters['📖 导览'].push({ idx, text: s.querySelector('h2')?.textContent ?? `第 ${idx+1} 页` }); }
+      return;
+    }
+    const text = Array.from(h2.childNodes)
+      .filter(n => n.nodeType === Node.TEXT_NODE || (n.nodeType === Node.ELEMENT_NODE && !n.classList.contains('chapter') && !n.classList.contains('must') && !n.classList.contains('opt')))
+      .map(n => n.textContent).join('').trim();
+    if (currentChap) {
+      chapters[currentChap].push({ idx, text });
+    } else {
+      chapters['📖 导览'] = chapters['📖 导览'] || [];
+      chapters['📖 导览'].push({ idx, text });
+    }
+  });
+
+  let html = '';
+  for (const [chap, items] of Object.entries(chapters)) {
+    html += `<div class="chapter-head">${chap}</div>`;
+    html += '<ol>';
+    for (const { idx, text, isCover } of items) {
+      const cls = isCover ? ' style="color:#7dd3fc; font-style:italic;"' : '';
+      html += `<li${cls} onclick="show(${idx}); toggleToc();">${text}</li>`;
+    }
+    html += '</ol>';
+  }
+  tocList.innerHTML = html;
+
+  function toggleToc() {
+    document.getElementById('toc').classList.toggle('show');
+  }
+
+  show(0);
+</script>
+
+</body>
+</html>
