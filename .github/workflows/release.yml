@@ -65,11 +65,12 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Tauri app
+      # ── push tag v* 时：用 tauri-action 自动 build + 上传到 Release draft ──
+      - name: Build Tauri app (release)
+        if: github.event_name == 'push'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 防止 Windows 上 git autocrlf 把行尾搞乱影响校验
           GIT_TERMINAL_PROMPT: 0
         with:
           tagName: ${{ github.ref_name }}
@@ -88,11 +89,14 @@ jobs:
             ### 校验
 
             发布前请人工 publish draft；安装包均经 GitHub Actions 工件签名（attestation）。
-          releaseDraft: ${{ github.event_name == 'push' }}
+          releaseDraft: true
           prerelease: true
-          # dry-run（workflow_dispatch + dry_run=true）时不创建 release，仅 build 工件
-          includeRelease: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
           args: --target ${{ matrix.target }}
+
+      # ── workflow_dispatch (dry-run) 时：直接调 tauri build，不走 release 上传 ──
+      - name: Build Tauri app (dry-run)
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm tauri build --target ${{ matrix.target }}
 
       - name: Upload artifact (dry-run / 备份)
         if: github.event_name == 'workflow_dispatch'
