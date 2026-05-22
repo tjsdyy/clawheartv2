@@ -1,0 +1,66 @@
+name: Release · Windows Only
+
+# 触发方式：仅手动。配合 scripts/release.sh 使用 —
+# mac 本地打，win 走 CI（macos-13 runner 跑 x86_64 mac 编译太慢，浪费 CI minutes）。
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag（例 v2.0.0-alpha.2，与 tauri.conf.json 版本号一致）"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Build · windows-x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+          key: x86_64-pc-windows-msvc
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Tauri app + create draft Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_TERMINAL_PROMPT: 0
+        with:
+          tagName: ${{ inputs.release_tag }}
+          releaseName: "ClawHeart Desktop ${{ inputs.release_tag }}"
+          releaseBody: |
+            ## ClawHeart Desktop ${{ inputs.release_tag }}
+
+            ### 📦 下载
+
+            - **macOS Apple Silicon (M1/M2/M3/M4)**：`ClawHeart_aarch64.dmg`
+            - **macOS Intel**：`ClawHeart_x64.dmg`
+            - **Windows 10/11 x64**：`ClawHeart_x64-setup.exe`
+          releaseDraft: true
+          prerelease: false
+          args: --target x86_64-pc-windows-msvc
