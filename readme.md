@@ -109,6 +109,18 @@ export ANTHROPIC_BASE_URL=http://127.0.0.1:19112
 # 或用 ClawHeart 的「Agent 一键覆盖」向导自动配置所有 Agent
 ```
 
+### Agent SKILL（让 AI 听懂安全指令）
+
+通过 [`npx skills`](https://skills.sh/) 一行装上 ClawHeart 的 Agent 适配 skill，让 Claude Code / Codex / Cursor / Amp / Cline / OpenClaw 等 12+ Agent 听懂「扫一下 AI 安全」、「鉴定一下技能」、「我装了哪些 Agent」等自然语言，自动调用本机 `clawheart-cli`：
+
+```bash
+npx skills add tjsdyy/clawheartv2@clawheart-security -g
+```
+
+支持的命令清单见 [`packages/clawheart-skill/clawheart-security/SKILL.md`](./packages/clawheart-skill/clawheart-security/SKILL.md)。
+
+> 前置：`clawheart-cli` 需在 PATH。每个 Release 都附带独立的 CLI tarball（mac arm64 / mac x64 / windows x64），见 [Release 页](https://github.com/tjsdyy/clawheartv2/releases/latest) 里 `clawheart-cli-*.tar.gz` / `clawheart-cli-*.zip`。
+
 ## 从源码运行
 
 ### 工具链
