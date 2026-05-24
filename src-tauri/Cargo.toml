@@ -1,6 +1,6 @@
 [package]
 name = "clawheart"
-version = "2.0.0-alpha.8"
+version = "2.0.0-alpha.9"
 description = "ClawHeart Desktop v2 — Local AI Security Runtime"
 authors = ["ClawHeart Team"]
 license = "Apache-2.0"

@@ -1,6 +1,6 @@
 [package]
 name = "clawheart-cli"
-version = "2.0.0-alpha.8"
+version = "2.0.0-alpha.9"
 description = "ClawHeart CLI — Agent 对话框驱动的命令行接口"
 authors = ["ClawHeart Team"]
 license = "Apache-2.0"
