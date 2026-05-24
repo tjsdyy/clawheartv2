@@ -6,6 +6,8 @@
 
 让每个 AI 调用可观察 · 可拦截 · 可解释
 
+[![Latest Release](https://img.shields.io/github/v/release/tjsdyy/clawheartv2?include_prereleases&label=latest&color=22c55e)](https://github.com/tjsdyy/clawheartv2/releases/latest)
+[![Stars](https://img.shields.io/github/stars/tjsdyy/clawheartv2?style=flat&color=fbbf24)](https://github.com/tjsdyy/clawheartv2/stargazers)
 [![Tauri](https://img.shields.io/badge/Tauri-2.0-FFC131?logo=tauri)](https://tauri.app)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange?logo=rust)](https://www.rust-lang.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev)
