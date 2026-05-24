@@ -103,6 +103,51 @@ jobs:
           prerelease: true
           args: --target ${{ matrix.target }}
 
+      # ── 在 release 模式额外构建 clawheart-cli 单二进制并上传 ──
+      - name: Build clawheart-cli (release)
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release')
+        shell: bash
+        run: |
+          cargo build --manifest-path src-tauri/Cargo.toml \
+            --release --no-default-features --features cli \
+            --bin clawheart-cli --target ${{ matrix.target }}
+
+      - name: Package + upload clawheart-cli (release)
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG_NAME#v}"
+          TARGET="${{ matrix.target }}"
+
+          if [[ "$TARGET" == *windows* ]]; then
+            EXT="zip"
+            BIN_NAME="clawheart-cli.exe"
+          else
+            EXT="tar.gz"
+            BIN_NAME="clawheart-cli"
+          fi
+
+          BIN_PATH="src-tauri/target/${TARGET}/release/${BIN_NAME}"
+          [ -f "$BIN_PATH" ] || { echo "missing $BIN_PATH"; exit 1; }
+
+          PKG_VERSIONED="clawheart-cli-${VERSION}-${TARGET}.${EXT}"
+          PKG_STABLE="clawheart-cli-${TARGET}.${EXT}"
+
+          if [ "$EXT" = "zip" ]; then
+            (cd "$(dirname "$BIN_PATH")" && 7z a -tzip "/tmp/${PKG_VERSIONED}" "${BIN_NAME}" > /dev/null)
+            cp "/tmp/${PKG_VERSIONED}" "/tmp/${PKG_STABLE}"
+          else
+            tar -czf "/tmp/${PKG_VERSIONED}" -C "$(dirname "$BIN_PATH")" "${BIN_NAME}"
+            cp "/tmp/${PKG_VERSIONED}" "/tmp/${PKG_STABLE}"
+          fi
+
+          gh release upload "${TAG_NAME}" "/tmp/${PKG_VERSIONED}" "/tmp/${PKG_STABLE}" \
+            -R ${{ github.repository }} --clobber
+
       # ── dry-run 模式：直接调 tauri build，不创建 Release ──
       - name: Build Tauri app (dry-run)
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'dry-run'
