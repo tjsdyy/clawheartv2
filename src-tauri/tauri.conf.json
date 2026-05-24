@@ -1,7 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2.0.0",
   "productName": "ClawHeart",
-  "version": "2.0.0-alpha.3",
+  "mainBinaryName": "clawheart",
+  "version": "2.0.0-alpha.4",
   "identifier": "live.clawheart.desktop",
   "build": {
     "beforeDevCommand": "pnpm dev",

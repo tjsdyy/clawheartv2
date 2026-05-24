@@ -101,7 +101,7 @@ jobs:
             发布前请人工 publish draft。
           releaseDraft: true
           prerelease: true
-          args: --bin clawheart --target ${{ matrix.target }}
+          args: --target ${{ matrix.target }}
 
       # ── 在 release 模式额外构建 clawheart-cli 单二进制并上传 ──
       - name: Build clawheart-cli (release)
