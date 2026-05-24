@@ -8,6 +8,9 @@
 //   storage/*  — schema + queries（feature = storage）
 
 pub mod agents;
+#[cfg(feature = "cli")]
+pub mod cli;
+#[cfg(feature = "desktop")]
 pub mod commands;
 pub mod error;
 pub mod proxy;
@@ -17,9 +20,12 @@ pub mod state;
 pub mod storage;
 pub mod sync;
 
+#[cfg(feature = "desktop")]
 use state::AppState;
+#[cfg(feature = "desktop")]
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
+#[cfg(feature = "desktop")]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     init_tracing();
@@ -216,7 +222,7 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-#[cfg(feature = "storage")]
+#[cfg(all(feature = "desktop", feature = "storage"))]
 fn build_state() -> AppState {
     let db_path = storage::conn::default_path();
     tracing::info!("Opening DB at {:?}", db_path);
@@ -237,11 +243,12 @@ fn build_state() -> AppState {
     }
 }
 
-#[cfg(not(feature = "storage"))]
+#[cfg(all(feature = "desktop", not(feature = "storage")))]
 fn build_state() -> AppState {
     AppState::new()
 }
 
+#[cfg(feature = "desktop")]
 fn init_tracing() {
     let filter = EnvFilter::try_from_env("CLAWHEART_LOG")
         .unwrap_or_else(|_| EnvFilter::new("info,clawheart=debug"));

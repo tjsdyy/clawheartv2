@@ -64,3 +64,23 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: --target x86_64-pc-windows-msvc
+
+      # ─── 额外构建 clawheart-cli 单二进制并打成 zip ───
+      - name: Build clawheart-cli (Windows)
+        shell: pwsh
+        run: |
+          cargo build --manifest-path src-tauri/Cargo.toml `
+            --release --no-default-features --features cli `
+            --bin clawheart-cli --target x86_64-pc-windows-msvc
+
+      - name: Zip + upload clawheart-cli to Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = "${{ inputs.release_tag }}".TrimStart('v')
+          $cliExe  = "src-tauri/target/x86_64-pc-windows-msvc/release/clawheart-cli.exe"
+          $zip     = "clawheart-cli-$version-x86_64-pc-windows-msvc.zip"
+          Compress-Archive -Path $cliExe -DestinationPath $zip -Force
+          gh release upload "${{ inputs.release_tag }}" $zip `
+            -R ${{ github.repository }} --clobber

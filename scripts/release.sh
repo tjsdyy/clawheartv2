@@ -143,6 +143,26 @@ $(tail -30 "$LOG_X64")"
 fi
 ok "  mac x64 完成"
 
+# ── 本地构建 clawheart-cli 双架构（Phase 7）────────────────────────
+log "本地构建 clawheart-cli（mac arm64 + x64）"
+
+LOG_CLI_ARM="/tmp/clawheart-release-cli-arm64.log"
+LOG_CLI_X64="/tmp/clawheart-release-cli-x64.log"
+
+if ! cargo build --manifest-path src-tauri/Cargo.toml \
+     --release --no-default-features --features cli \
+     --bin clawheart-cli --target aarch64-apple-darwin \
+     > "$LOG_CLI_ARM" 2>&1; then
+  err "CLI arm64 build 失败：$(tail -20 "$LOG_CLI_ARM")"
+fi
+if ! cargo build --manifest-path src-tauri/Cargo.toml \
+     --release --no-default-features --features cli \
+     --bin clawheart-cli --target x86_64-apple-darwin \
+     > "$LOG_CLI_X64" 2>&1; then
+  err "CLI x64 build 失败：$(tail -20 "$LOG_CLI_X64")"
+fi
+ok "  clawheart-cli 双架构完成"
+
 ARM_DMG="$ROOT/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/ClawHeart_${VERSION}_aarch64.dmg"
 X64_DMG="$ROOT/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/ClawHeart_${VERSION}_x64.dmg"
 
@@ -188,8 +208,38 @@ gh release upload "$TAG" -R "$REPO" --clobber \
   "$STAGE/ClawHeart_x64.dmg" \
   "$STAGE/ClawHeart_x64-setup.exe"
 
+# ── CLI binary tarball（mac arm64 + x64）+ 稳定别名 ──
+log "打包 + 上传 clawheart-cli tarball"
+ARM_CLI_BIN="$ROOT/src-tauri/target/aarch64-apple-darwin/release/clawheart-cli"
+X64_CLI_BIN="$ROOT/src-tauri/target/x86_64-apple-darwin/release/clawheart-cli"
+
+tar -czf "$STAGE/clawheart-cli-${VERSION}-aarch64-apple-darwin.tar.gz" \
+  -C "$(dirname "$ARM_CLI_BIN")" clawheart-cli
+tar -czf "$STAGE/clawheart-cli-${VERSION}-x86_64-apple-darwin.tar.gz" \
+  -C "$(dirname "$X64_CLI_BIN")" clawheart-cli
+
+# 稳定别名（去版本号）
+cp "$STAGE/clawheart-cli-${VERSION}-aarch64-apple-darwin.tar.gz" \
+   "$STAGE/clawheart-cli-aarch64-apple-darwin.tar.gz"
+cp "$STAGE/clawheart-cli-${VERSION}-x86_64-apple-darwin.tar.gz" \
+   "$STAGE/clawheart-cli-x86_64-apple-darwin.tar.gz"
+
+gh release upload "$TAG" -R "$REPO" --clobber \
+  "$STAGE/clawheart-cli-${VERSION}-aarch64-apple-darwin.tar.gz" \
+  "$STAGE/clawheart-cli-${VERSION}-x86_64-apple-darwin.tar.gz" \
+  "$STAGE/clawheart-cli-aarch64-apple-darwin.tar.gz" \
+  "$STAGE/clawheart-cli-x86_64-apple-darwin.tar.gz"
+
+# Windows CLI zip 已由 release-windows-only.yml 上传，这里只补稳定别名
+WIN_CLI_ZIP_VERSIONED="clawheart-cli-${VERSION}-x86_64-pc-windows-msvc.zip"
+if gh release download "$TAG" -R "$REPO" -p "$WIN_CLI_ZIP_VERSIONED" --output "$STAGE/$WIN_CLI_ZIP_VERSIONED" 2>/dev/null; then
+  cp "$STAGE/$WIN_CLI_ZIP_VERSIONED" "$STAGE/clawheart-cli-x86_64-pc-windows-msvc.zip"
+  gh release upload "$TAG" -R "$REPO" --clobber \
+    "$STAGE/clawheart-cli-x86_64-pc-windows-msvc.zip"
+fi
+
 rm -rf "$STAGE"
-ok "稳定别名已上传"
+ok "稳定别名 + CLI tarball 已上传"
 
 # ──────────────────────────────────────────────────────────────────
 # 6. （可选）一键 publish
