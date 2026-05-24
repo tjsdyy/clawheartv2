@@ -1,0 +1,23 @@
+[package]
+name = "clawheart-cli"
+version = "2.0.0-alpha.6"
+description = "ClawHeart CLI — Agent 对话框驱动的命令行接口"
+authors = ["ClawHeart Team"]
+license = "Apache-2.0"
+edition = "2021"
+rust-version = "1.77"
+
+[[bin]]
+name = "clawheart-cli"
+path = "src/main.rs"
+
+[dependencies]
+clawheart_lib = { package = "clawheart", path = "../src-tauri", default-features = false, features = ["storage", "agents_real"] }
+
+clap = { version = "4.5", features = ["derive"] }
+rpassword = "7.3"
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+dirs = "5.0"
+

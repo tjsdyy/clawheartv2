@@ -20,6 +20,7 @@ dist-ssr/
 build/
 
 # Rust / Tauri
+target/
 src-tauri/target/
 src-tauri/gen/
 

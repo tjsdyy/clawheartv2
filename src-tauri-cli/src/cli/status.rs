@@ -25,8 +25,8 @@ pub fn execute(json: bool, db: Option<PathBuf>) -> CliResult {
     let db_size = std::fs::metadata(&db_path).map(|m| m.len()).unwrap_or(0);
     let db_exists = db_path.exists();
 
-    let agents = crate::agents::scanner::Scanner::with_default_platforms().scan_once();
-    let skills = crate::skills::discover::discover_all();
+    let agents = clawheart_lib::agents::scanner::Scanner::with_default_platforms().scan_once();
+    let skills = clawheart_lib::skills::discover::discover_all();
 
     let dto = StatusDto {
         version: env!("CARGO_PKG_VERSION").into(),

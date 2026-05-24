@@ -43,8 +43,8 @@ pub fn execute(cmd: ProvidersCmd, json: bool, db: Option<PathBuf>) -> CliResult 
 
 #[cfg(feature = "storage")]
 fn list(json: bool, db_override: Option<PathBuf>) -> CliResult {
-    use crate::storage::conn;
-    use crate::storage::queries::providers as q;
+    use clawheart_lib::storage::conn;
+    use clawheart_lib::storage::queries::providers as q;
 
     let db_path = db_override.unwrap_or_else(conn::default_path);
     let db = conn::open(&db_path).map_err(|e| format!("open DB: {}", e))?;

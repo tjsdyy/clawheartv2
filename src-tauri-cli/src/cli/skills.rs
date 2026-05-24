@@ -4,7 +4,7 @@ use serde::Serialize;
 use std::path::PathBuf;
 
 use super::output::{CliResult, Output};
-use crate::skills::discover::{discover_all, DiscoveredSkill};
+use clawheart_lib::skills::discover::{discover_all, DiscoveredSkill};
 
 #[derive(Subcommand)]
 pub enum SkillsCmd {
@@ -104,7 +104,7 @@ fn render_list(skills: &[DiscoveredSkill]) -> String {
 }
 
 fn scan(args: ScanSkillArgs, json: bool) -> CliResult {
-    use crate::security::skill_scanner::{scan as guard_scan, Context, SkillBundle};
+    use clawheart_lib::security::skill_scanner::{scan as guard_scan, Context, SkillBundle};
     use std::fs;
 
     let all = discover_all();
@@ -190,10 +190,10 @@ fn scan(args: ScanSkillArgs, json: bool) -> CliResult {
 fn collect_files(
     root: &std::path::Path,
     dir: &std::path::Path,
-    out: &mut Vec<(String, String, crate::security::skill_scanner::Context)>,
+    out: &mut Vec<(String, String, clawheart_lib::security::skill_scanner::Context)>,
     depth: u32,
 ) {
-    use crate::security::skill_scanner::Context;
+    use clawheart_lib::security::skill_scanner::Context;
     use std::fs;
     if depth > 4 || out.len() >= 50 {
         return;
@@ -229,7 +229,7 @@ fn collect_files(
 }
 
 fn backup(args: BackupArgs, json: bool) -> CliResult {
-    use crate::skills::backup::backup_skills;
+    use clawheart_lib::skills::backup::backup_skills;
 
     let ids: Vec<String> = if args.ids.is_empty() {
         discover_all().iter().map(|s| s.id.clone()).collect()

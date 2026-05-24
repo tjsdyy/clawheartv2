@@ -3,8 +3,8 @@ use clap::Subcommand;
 use serde::Serialize;
 
 use super::output::{CliResult, Output};
-use crate::agents::scanner::Scanner;
-use crate::agents::DiscoveredAgent;
+use clawheart_lib::agents::scanner::Scanner;
+use clawheart_lib::agents::DiscoveredAgent;
 
 #[derive(Subcommand)]
 pub enum AgentsCmd {

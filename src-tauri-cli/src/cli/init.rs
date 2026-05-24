@@ -245,7 +245,7 @@ fn build_step_info(step: StepId, state: &InitState) -> StepInfo {
         StepId::DetectAgents => {
             // 实时扫描 Agent
             let agents =
-                crate::agents::scanner::Scanner::with_default_platforms().scan_once();
+                clawheart_lib::agents::scanner::Scanner::with_default_platforms().scan_once();
             let names: Vec<String> = agents
                 .iter()
                 .map(|a| format!("{} ({})", a.agent_name, a.platform))
@@ -362,7 +362,7 @@ fn build_step_info(step: StepId, state: &InitState) -> StepInfo {
 
         StepId::ScanBaseline => {
             // 触发一次扫描作为基线
-            let run = crate::security::scanner::run_scan(&[]);
+            let run = clawheart_lib::security::scanner::run_scan(&[]);
             let ctx = serde_json::json!({
                 "total":   run.total_checks,
                 "passed":  run.passed,

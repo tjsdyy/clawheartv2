@@ -4,7 +4,7 @@ use serde::Serialize;
 use std::path::PathBuf;
 
 use super::output::{CliResult, Output};
-use crate::security::scanner::{run_scan, CheckOutcome, CheckResult};
+use clawheart_lib::security::scanner::{run_scan, CheckOutcome, CheckResult};
 
 #[derive(Args)]
 pub struct ScanArgs {

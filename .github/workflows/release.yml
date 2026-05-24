@@ -108,9 +108,7 @@ jobs:
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release')
         shell: bash
         run: |
-          cargo build --manifest-path src-tauri/Cargo.toml \
-            --release --no-default-features --features cli \
-            --bin clawheart-cli --target ${{ matrix.target }}
+          cargo build -p clawheart-cli --release --target ${{ matrix.target }}
 
       - name: Package + upload clawheart-cli (release)
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release')
@@ -131,7 +129,7 @@ jobs:
             BIN_NAME="clawheart-cli"
           fi
 
-          BIN_PATH="src-tauri/target/${TARGET}/release/${BIN_NAME}"
+          BIN_PATH="target/${TARGET}/release/${BIN_NAME}"
           [ -f "$BIN_PATH" ] || { echo "missing $BIN_PATH"; exit 1; }
 
           PKG_VERSIONED="clawheart-cli-${VERSION}-${TARGET}.${EXT}"
@@ -159,8 +157,8 @@ jobs:
         with:
           name: clawheart-${{ matrix.name }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            target/${{ matrix.target }}/release/bundle/nsis/*.exe
           if-no-files-found: ignore
           retention-days: 14
 

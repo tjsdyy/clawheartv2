@@ -8,8 +8,6 @@
 //   storage/*  — schema + queries（feature = storage）
 
 pub mod agents;
-#[cfg(feature = "cli")]
-pub mod cli;
 #[cfg(feature = "desktop")]
 pub mod commands;
 pub mod error;

@@ -149,22 +149,18 @@ log "本地构建 clawheart-cli（mac arm64 + x64）"
 LOG_CLI_ARM="/tmp/clawheart-release-cli-arm64.log"
 LOG_CLI_X64="/tmp/clawheart-release-cli-x64.log"
 
-if ! cargo build --manifest-path src-tauri/Cargo.toml \
-     --release --no-default-features --features cli \
-     --bin clawheart-cli --target aarch64-apple-darwin \
+if ! cargo build -p clawheart-cli --release --target aarch64-apple-darwin \
      > "$LOG_CLI_ARM" 2>&1; then
   err "CLI arm64 build 失败：$(tail -20 "$LOG_CLI_ARM")"
 fi
-if ! cargo build --manifest-path src-tauri/Cargo.toml \
-     --release --no-default-features --features cli \
-     --bin clawheart-cli --target x86_64-apple-darwin \
+if ! cargo build -p clawheart-cli --release --target x86_64-apple-darwin \
      > "$LOG_CLI_X64" 2>&1; then
   err "CLI x64 build 失败：$(tail -20 "$LOG_CLI_X64")"
 fi
 ok "  clawheart-cli 双架构完成"
 
-ARM_DMG="$ROOT/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/ClawHeart_${VERSION}_aarch64.dmg"
-X64_DMG="$ROOT/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/ClawHeart_${VERSION}_x64.dmg"
+ARM_DMG="$ROOT/target/aarch64-apple-darwin/release/bundle/dmg/ClawHeart_${VERSION}_aarch64.dmg"
+X64_DMG="$ROOT/target/x86_64-apple-darwin/release/bundle/dmg/ClawHeart_${VERSION}_x64.dmg"
 
 [ -f "$ARM_DMG" ] || err "找不到 $ARM_DMG"
 [ -f "$X64_DMG" ] || err "找不到 $X64_DMG"
@@ -210,8 +206,8 @@ gh release upload "$TAG" -R "$REPO" --clobber \
 
 # ── CLI binary tarball（mac arm64 + x64）+ 稳定别名 ──
 log "打包 + 上传 clawheart-cli tarball"
-ARM_CLI_BIN="$ROOT/src-tauri/target/aarch64-apple-darwin/release/clawheart-cli"
-X64_CLI_BIN="$ROOT/src-tauri/target/x86_64-apple-darwin/release/clawheart-cli"
+ARM_CLI_BIN="$ROOT/target/aarch64-apple-darwin/release/clawheart-cli"
+X64_CLI_BIN="$ROOT/target/x86_64-apple-darwin/release/clawheart-cli"
 
 tar -czf "$STAGE/clawheart-cli-${VERSION}-aarch64-apple-darwin.tar.gz" \
   -C "$(dirname "$ARM_CLI_BIN")" clawheart-cli
