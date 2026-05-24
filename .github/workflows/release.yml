@@ -163,6 +163,62 @@ jobs:
           retention-days: 14
 
   # ──────────────────────────────────────────────────────────────────
+  # Linux CLI-only build —— 不跑 Desktop GUI bundle，仅供 Docker 镜像
+  # （clawheartv2Web 用）与服务器端用户使用。webkit/gtk 依赖太重，
+  # Desktop Linux 暂不发版。
+  # ──────────────────────────────────────────────────────────────────
+  build-cli-linux:
+    name: Build CLI · ${{ matrix.name }}
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release')
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            name: linux-x64
+            target: x86_64-unknown-linux-gnu
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: cli-${{ matrix.target }}
+
+      - name: Build clawheart-cli
+        shell: bash
+        run: |
+          cargo build -p clawheart-cli --release --target ${{ matrix.target }}
+
+      - name: Package + upload clawheart-cli
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG_NAME#v}"
+          TARGET="${{ matrix.target }}"
+          BIN_PATH="target/${TARGET}/release/clawheart-cli"
+          [ -f "$BIN_PATH" ] || { echo "missing $BIN_PATH"; exit 1; }
+
+          PKG_VERSIONED="clawheart-cli-${VERSION}-${TARGET}.tar.gz"
+          PKG_STABLE="clawheart-cli-${TARGET}.tar.gz"
+
+          tar -czf "/tmp/${PKG_VERSIONED}" -C "$(dirname "$BIN_PATH")" "clawheart-cli"
+          cp "/tmp/${PKG_VERSIONED}" "/tmp/${PKG_STABLE}"
+
+          gh release upload "${TAG_NAME}" "/tmp/${PKG_VERSIONED}" "/tmp/${PKG_STABLE}" \
+            -R ${{ github.repository }} --clobber
+
+  # ──────────────────────────────────────────────────────────────────
   # 给 Release 加上去版本号的稳定别名，便于官网用
   # `releases/latest/download/ClawHeart_<arch>.dmg` 永久链接
   # ──────────────────────────────────────────────────────────────────

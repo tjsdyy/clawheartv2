@@ -23,6 +23,11 @@ pub struct ScanSkillArgs {
     /// 鉴定所有技能
     #[arg(long)]
     pub all: bool,
+    /// 扫描指定目录（绕过 ~/.<agent>/skills/ 发现）。目录下每个
+    /// 包含 SKILL.md 的子目录会被当作独立 skill。也可指向单个
+    /// skill 目录直接扫描。
+    #[arg(long, value_name = "PATH")]
+    pub dir: Option<PathBuf>,
 }
 
 #[derive(Args)]
@@ -107,35 +112,74 @@ fn scan(args: ScanSkillArgs, json: bool) -> CliResult {
     use clawheart_lib::security::skill_scanner::{scan as guard_scan, Context, SkillBundle};
     use std::fs;
 
-    let all = discover_all();
-
-    let targets: Vec<&DiscoveredSkill> = if args.all {
-        all.iter().collect()
-    } else {
-        let id = args
-            .id
-            .as_ref()
-            .ok_or_else(|| "需提供 <id> 或 --all".to_string())?;
-        let s = all
-            .iter()
-            .find(|s| &s.id == id)
-            .ok_or_else(|| format!("技能 {} 未找到", id))?;
-        vec![s]
-    };
-
+    // 输出 DTO，含完整规则元数据，给 Web/Agent 渲染足够信息。
     #[derive(Serialize)]
     struct ReportDto {
         id: String,
         name: String,
+        source_path: String,
         score: u32,
         blocked: bool,
-        hard_triggers: Vec<String>,
-        finding_count: usize,
+        hard_triggers: Vec<clawheart_lib::security::skill_scanner::RuleHit>,
+        findings: Vec<clawheart_lib::security::skill_scanner::Finding>,
+    }
+
+    // ── 模式 1：--dir 指定目录（绕过 discover_all）──
+    let target_skills: Vec<(String, String, std::path::PathBuf)> = if let Some(dir) = args.dir.as_ref() {
+        if !dir.exists() {
+            return Err(format!("目录不存在：{}", dir.display()));
+        }
+        if !dir.is_dir() {
+            return Err(format!("不是目录：{}", dir.display()));
+        }
+        find_skill_roots(dir)
+            .into_iter()
+            .map(|p| {
+                let id = p
+                    .strip_prefix(dir)
+                    .unwrap_or(&p)
+                    .to_string_lossy()
+                    .replace('/', "-")
+                    .replace('\\', "-");
+                let id = if id.is_empty() {
+                    p.file_name()
+                        .map(|n| n.to_string_lossy().into_owned())
+                        .unwrap_or_else(|| "skill".into())
+                } else {
+                    id
+                };
+                let name = read_skill_name(&p).unwrap_or_else(|| id.clone());
+                (id, name, p)
+            })
+            .collect()
+    } else {
+        // ── 模式 2：原本机扫描 ──
+        let all = discover_all();
+        let targets: Vec<&DiscoveredSkill> = if args.all {
+            all.iter().collect()
+        } else {
+            let id = args
+                .id
+                .as_ref()
+                .ok_or_else(|| "需提供 <id>、--all 或 --dir <PATH>".to_string())?;
+            let s = all
+                .iter()
+                .find(|s| &s.id == id)
+                .ok_or_else(|| format!("技能 {} 未找到", id))?;
+            vec![s]
+        };
+        targets
+            .into_iter()
+            .map(|s| (s.id.clone(), s.name.clone(), std::path::PathBuf::from(&s.source_path)))
+            .collect()
+    };
+
+    if target_skills.is_empty() {
+        return Err("未找到任何 SKILL.md".into());
     }
 
     let mut reports: Vec<ReportDto> = Vec::new();
-    for sk in targets {
-        let root = std::path::Path::new(&sk.source_path);
+    for (id, name, root) in &target_skills {
         let manifest = fs::read_to_string(root.join("SKILL.md"))
             .or_else(|_| fs::read_to_string(root.join("package.json")))
             .unwrap_or_default();
@@ -151,12 +195,13 @@ fn scan(args: ScanSkillArgs, json: bool) -> CliResult {
         };
         let r = guard_scan(&bundle);
         reports.push(ReportDto {
-            id: sk.id.clone(),
-            name: sk.name.clone(),
+            id: id.clone(),
+            name: name.clone(),
+            source_path: root.to_string_lossy().into_owned(),
             score: r.score,
             blocked: r.blocked,
-            hard_triggers: r.hard_triggers.iter().map(|t| t.rule_id.clone()).collect(),
-            finding_count: r.findings.len(),
+            hard_triggers: r.hard_triggers,
+            findings: r.findings,
         });
     }
 
@@ -169,22 +214,82 @@ fn scan(args: ScanSkillArgs, json: bool) -> CliResult {
         } else {
             "✓ 通过"
         };
+        let hard_summary = if r.hard_triggers.is_empty() {
+            String::new()
+        } else {
+            let ids: Vec<String> = r.hard_triggers.iter().map(|t| t.rule_id.clone()).collect();
+            format!(" · 硬触发：{}", ids.join(","))
+        };
         text.push_str(&format!(
             "  {} score={} · {} · findings={}{}\n",
             status,
             r.score,
             r.name,
-            r.finding_count,
-            if r.hard_triggers.is_empty() {
-                String::new()
-            } else {
-                format!(" · 硬触发：{}", r.hard_triggers.join(","))
-            },
+            r.findings.len(),
+            hard_summary,
         ));
     }
 
     Output::ok_with_text(reports, text).emit(json);
     Ok(())
+}
+
+/// 找出目录下所有"skill 根目录"（即包含 SKILL.md 的目录）。
+/// 如果 dir 本身含 SKILL.md，则单独返回 dir。
+fn find_skill_roots(dir: &std::path::Path) -> Vec<std::path::PathBuf> {
+    let mut out = Vec::new();
+    if dir.join("SKILL.md").is_file() {
+        out.push(dir.to_path_buf());
+        return out;
+    }
+    let mut stack = vec![dir.to_path_buf()];
+    while let Some(d) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&d) else { continue };
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if let Some(n) = p.file_name().and_then(|n| n.to_str()) {
+                if n.starts_with('.') || n == "node_modules" || n == "target" {
+                    continue;
+                }
+            }
+            if p.is_dir() {
+                if p.join("SKILL.md").is_file() {
+                    out.push(p);
+                } else {
+                    stack.push(p);
+                }
+            }
+        }
+        if out.len() >= 100 {
+            break;
+        }
+    }
+    out
+}
+
+/// 从 SKILL.md frontmatter 读 `name:` 字段，简单匹配，不解析完整 YAML。
+fn read_skill_name(dir: &std::path::Path) -> Option<String> {
+    let content = std::fs::read_to_string(dir.join("SKILL.md")).ok()?;
+    let mut in_fm = false;
+    for line in content.lines().take(50) {
+        let t = line.trim();
+        if t == "---" {
+            if in_fm {
+                return None;
+            }
+            in_fm = true;
+            continue;
+        }
+        if in_fm {
+            if let Some(rest) = t.strip_prefix("name:") {
+                let v = rest.trim().trim_matches(|c| c == '"' || c == '\'');
+                if !v.is_empty() {
+                    return Some(v.into());
+                }
+            }
+        }
+    }
+    None
 }
 
 fn collect_files(
