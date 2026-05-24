@@ -169,6 +169,10 @@ jobs:
   # ──────────────────────────────────────────────────────────────────
   build-cli-linux:
     name: Build CLI · ${{ matrix.name }}
+    # 必须等 build 矩阵跑完 —— tauri-action 在 mac/win 矩阵里创建 Release
+    # （draft），cli-linux 才能 `gh release upload` 到该 Release。否则
+    # 出现 "release not found"。
+    needs: build
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release')
     runs-on: ${{ matrix.runner }}
     strategy:
