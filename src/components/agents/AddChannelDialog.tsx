@@ -355,7 +355,9 @@ export function AddChannelDialog({
                   required={!isEditing}
                   hint={
                     isEditing
-                      ? "已加密保存。留空保留原值，填入则覆盖"
+                      ? editingProfile.credential_set
+                        ? "已加密保存。留空保留原值，填入则覆盖"
+                        : "尚未保存 API Key，填入后会加密存入系统 Keychain"
                       : "加密存入系统 Keychain，本地不留明文"
                   }
                 >

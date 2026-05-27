@@ -27,8 +27,9 @@ mod backed {
     const SERVICE: &str = "live.clawheart.desktop";
 
     fn fallback_dir() -> PathBuf {
-        let home = std::env::var_os("HOME")
-            .map(PathBuf::from)
+        let home = dirs::home_dir()
+            .or_else(|| std::env::var_os("HOME").map(PathBuf::from))
+            .or_else(|| std::env::var_os("USERPROFILE").map(PathBuf::from))
             .unwrap_or_else(|| PathBuf::from("."));
         home.join(".clawheart-v2/credentials")
     }
@@ -36,6 +37,24 @@ mod backed {
     fn fallback_path(key: &str) -> PathBuf {
         let safe = key.replace(['/', '\\', ':'], "_");
         fallback_dir().join(safe)
+    }
+
+    fn write_fallback(key: &str, secret: &str) -> Result<(), String> {
+        let dir = fallback_dir();
+        std::fs::create_dir_all(&dir)
+            .map_err(|e| format!("create credentials dir failed: {}", e))?;
+        let path = fallback_path(key);
+        std::fs::write(&path, hex_encode(secret))
+            .map_err(|e| format!("write credential file failed: {}", e))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(
+                &path,
+                std::fs::Permissions::from_mode(0o600),
+            );
+        }
+        Ok(())
     }
 
     pub fn store(key: &str, secret: &str) -> Result<(), String> {
@@ -52,8 +71,18 @@ mod backed {
         .unwrap_or(false);
 
         if kc_ok {
-            // keychain 完全可用，清理可能残留的 fallback 文件
-            let _ = std::fs::remove_file(fallback_path(key));
+            // Dev builds are often unsigned, which can make OS keychain access
+            // flaky across process restarts. Keep a local shadow fallback there
+            // so credential_set and proxy routing remain stable while developing.
+            #[cfg(debug_assertions)]
+            {
+                write_fallback(key, secret)?;
+            }
+            #[cfg(not(debug_assertions))]
+            {
+                // keychain 完全可用，清理可能残留的 fallback 文件
+                let _ = std::fs::remove_file(fallback_path(key));
+            }
             return Ok(());
         }
 
@@ -62,21 +91,7 @@ mod backed {
             "keychain unavailable for key={}, fallback to ~/.clawheart-v2/credentials/",
             key
         );
-        let dir = fallback_dir();
-        std::fs::create_dir_all(&dir)
-            .map_err(|e| format!("create credentials dir failed: {}", e))?;
-        let path = fallback_path(key);
-        std::fs::write(&path, hex_encode(secret))
-            .map_err(|e| format!("write credential file failed: {}", e))?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let _ = std::fs::set_permissions(
-                &path,
-                std::fs::Permissions::from_mode(0o600),
-            );
-        }
-        Ok(())
+        write_fallback(key, secret)
     }
 
     pub fn fetch(key: &str) -> Result<Option<String>, String> {

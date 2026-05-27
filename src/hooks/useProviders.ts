@@ -163,7 +163,14 @@ export function useSetProviderCredential() {
         apiKey,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_ok, variables) => {
+      qc.setQueryData<ProviderProfile[]>(QK_PROFILES, (profiles) =>
+        profiles?.map((profile) =>
+          profile.id === variables.profileId
+            ? { ...profile, credential_set: true }
+            : profile,
+        ),
+      );
       qc.invalidateQueries({ queryKey: QK_PROFILES });
     },
     onError: (err) => {
