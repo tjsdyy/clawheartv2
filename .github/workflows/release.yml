@@ -78,7 +78,7 @@ jobs:
       # 触发：push tag v* 或 workflow_dispatch + mode=release
       - name: Build Tauri app (release)
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release')
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_TERMINAL_PROMPT: 0
