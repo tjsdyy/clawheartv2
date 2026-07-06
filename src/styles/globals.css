@@ -596,3 +596,76 @@
   font-family: "JetBrains Mono", monospace;
 }
 .hero-tool-pill.soon { opacity: 0.4; cursor: not-allowed; }
+
+/* Admin skills form */
+.admin-input {
+  width: 100%;
+  border: 1px solid rgb(var(--border-soft));
+  border-radius: 8px;
+  background: rgb(var(--bg-elev) / 0.42);
+  color: rgb(var(--text));
+  padding: 8px 10px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.admin-input:focus {
+  border-color: rgb(var(--accent));
+  background: rgb(var(--bg-elev) / 0.64);
+  box-shadow: 0 0 0 3px rgb(var(--accent) / 0.12);
+}
+
+.admin-input:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
+.admin-primary,
+.admin-secondary,
+.admin-danger {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid rgb(var(--border-soft));
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 650;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.admin-primary {
+  border-color: rgb(var(--accent));
+  background: rgb(var(--accent));
+  color: white;
+}
+
+.admin-secondary {
+  background: rgb(var(--bg-elev) / 0.5);
+  color: rgb(var(--text));
+}
+
+.admin-danger {
+  border-color: rgb(244 63 94 / 0.28);
+  background: rgb(244 63 94 / 0.09);
+  color: rgb(244 63 94);
+}
+
+.admin-primary:hover:not(:disabled),
+.admin-secondary:hover:not(:disabled),
+.admin-danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgb(var(--text-muted));
+}
+
+.admin-primary:disabled,
+.admin-secondary:disabled,
+.admin-danger:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  transform: none;
+}

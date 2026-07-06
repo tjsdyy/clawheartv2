@@ -4,12 +4,13 @@ use crate::skills::{
     backup as skill_backup, discover as skill_discover, manage as skill_manage, DiscoveredSkill,
 };
 use crate::state::AppState;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tauri::State;
 
 #[derive(Serialize)]
 pub struct SkillListItem {
+    pub id: i64,
     pub slug: String,
     pub name: String,
     pub description: Option<String>,
@@ -18,6 +19,24 @@ pub struct SkillListItem {
     pub scan_score: u32,
     pub user_enabled: bool,
     pub system_status: String,
+    pub install_path: Option<String>,
+    pub metadata: Option<String>,
+    pub installed_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Deserialize)]
+pub struct AdminSkillInput {
+    pub slug: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub version: Option<String>,
+    pub system_status: Option<String>,
+    pub user_enabled: Option<bool>,
+    pub safety_label: Option<String>,
+    pub scan_score: Option<i32>,
+    pub install_path: Option<String>,
+    pub metadata: Option<String>,
 }
 
 #[tauri::command]
@@ -28,16 +47,7 @@ pub fn list_skills(state: State<AppState>) -> AppResult<Vec<SkillListItem>> {
             if let Ok(rows) = crate::storage::queries::skills::list(db) {
                 return Ok(rows
                     .into_iter()
-                    .map(|s| SkillListItem {
-                        slug: s.slug,
-                        name: s.name,
-                        description: s.description,
-                        version: s.version,
-                        safety_label: s.safety_label,
-                        scan_score: s.scan_score.max(0) as u32,
-                        user_enabled: s.user_enabled,
-                        system_status: s.system_status,
-                    })
+                    .map(skill_to_item)
                     .collect());
             }
         }
@@ -62,18 +72,74 @@ pub fn toggle_skill(state: State<AppState>, slug: String, enabled: bool) -> AppR
 
 #[tauri::command]
 pub fn set_skill_safety(
-    _state: State<AppState>,
-    _slug: String,
-    _label: String,
+    state: State<AppState>,
+    slug: String,
+    label: String,
 ) -> AppResult<()> {
-    // W17 真实实现：UPDATE skills SET safety_label = ?2 WHERE slug = ?1
-    // 当前 stub 等待用户审核流程定义
+    #[cfg(feature = "storage")]
+    {
+        if let Some(db) = &state.db {
+            validate_safety_label(&label)?;
+            crate::storage::queries::skills::set_safety(db, &slug, &label)
+                .map_err(|e| AppError::Other(format!("DB error: {}", e)))?;
+            return Ok(());
+        }
+    }
+    let _ = (state, slug, label);
     Ok(())
 }
 
 #[tauri::command]
-pub fn scan_skill(_slug: String) -> AppResult<serde_json::Value> {
-    // skill_scanner 已有 72 条规则，W17 接入完整扫描；当前返回乐观结果
+pub fn scan_skill(state: State<AppState>, slug: String) -> AppResult<serde_json::Value> {
+    #[cfg(feature = "storage")]
+    {
+        if let Some(db) = &state.db {
+            let skill = crate::storage::queries::skills::get(db, &slug)
+                .map_err(|e| AppError::Other(format!("DB error: {}", e)))?
+                .ok_or_else(|| AppError::Other(format!("技能 {} 未找到", slug)))?;
+            let manifest = format!(
+                "---\nname: {}\ndescription: {}\nversion: {}\n---\n\n{}\n{}",
+                skill.name,
+                skill.description.clone().unwrap_or_default(),
+                skill.version.clone().unwrap_or_default(),
+                skill.install_path.clone().unwrap_or_default(),
+                skill.metadata.clone().unwrap_or_default(),
+            );
+            let bundle = crate::security::skill_scanner::SkillBundle {
+                manifest: &manifest,
+                files: vec![("admin-metadata", manifest.as_str(), crate::security::skill_scanner::Context::Mention)],
+            };
+            let report = crate::security::skill_scanner::scan(&bundle);
+            let risk_level = if report.blocked || report.score < 50 {
+                "critical"
+            } else if report.score < 80 {
+                "warn"
+            } else {
+                "safe"
+            };
+            let hard = serde_json::to_string(&report.hard_triggers).unwrap_or_else(|_| "[]".into());
+            let findings = serde_json::to_string(&report.findings).unwrap_or_else(|_| "[]".into());
+            crate::storage::queries::skills::insert_scan_result(
+                db,
+                &slug,
+                report.score as i32,
+                risk_level,
+                report.blocked,
+                &hard,
+                &findings,
+            )
+            .map_err(|e| AppError::Other(format!("DB error: {}", e)))?;
+            return Ok(serde_json::json!({
+                "slug": slug,
+                "score": report.score,
+                "risk_level": risk_level,
+                "blocked": report.blocked,
+                "hard_triggers": report.hard_triggers,
+                "findings": report.findings,
+            }));
+        }
+    }
+    let _ = (state, slug);
     Ok(serde_json::json!({ "score": 100, "blocked": false, "findings": [] }))
 }
 
@@ -81,6 +147,64 @@ pub fn scan_skill(_slug: String) -> AppResult<serde_json::Value> {
 pub fn sync_skills() -> AppResult<u32> {
     // W17 接云端技能库
     Ok(0)
+}
+
+#[tauri::command]
+pub fn admin_list_skills(state: State<AppState>) -> AppResult<Vec<SkillListItem>> {
+    list_skills(state)
+}
+
+#[tauri::command]
+pub fn admin_upsert_skill(state: State<AppState>, input: AdminSkillInput) -> AppResult<SkillListItem> {
+    validate_admin_skill(&input)?;
+    #[cfg(feature = "storage")]
+    {
+        if let Some(db) = &state.db {
+            let existing = crate::storage::queries::skills::get(db, &input.slug)
+                .map_err(|e| AppError::Other(format!("DB error: {}", e)))?;
+            let system_status = input.system_status.unwrap_or_else(|| "available".into());
+            let safety_label = input.safety_label.unwrap_or_else(|| "unaudited".into());
+            validate_system_status(&system_status)?;
+            validate_safety_label(&safety_label)?;
+            let row = crate::storage::models::Skill {
+                id: existing.as_ref().map(|s| s.id).unwrap_or(0),
+                slug: input.slug.trim().to_string(),
+                name: input.name.trim().to_string(),
+                description: clean_opt(input.description),
+                version: clean_opt(input.version),
+                system_status,
+                user_enabled: input.user_enabled.unwrap_or(true),
+                safety_label,
+                scan_score: input.scan_score.unwrap_or(0).clamp(0, 100),
+                install_path: clean_opt(input.install_path),
+                metadata: clean_opt(input.metadata),
+                installed_at: existing.map(|s| s.installed_at).unwrap_or_default(),
+                updated_at: String::new(),
+            };
+            crate::storage::queries::skills::upsert(db, &row)
+                .map_err(|e| AppError::Other(format!("DB error: {}", e)))?;
+            let saved = crate::storage::queries::skills::get(db, &row.slug)
+                .map_err(|e| AppError::Other(format!("DB error: {}", e)))?
+                .ok_or_else(|| AppError::Other("保存后未找到技能".into()))?;
+            return Ok(skill_to_item(saved));
+        }
+    }
+    let _ = state;
+    Err(AppError::NotImplemented("storage feature disabled"))
+}
+
+#[tauri::command]
+pub fn admin_delete_skill(state: State<AppState>, slug: String) -> AppResult<()> {
+    #[cfg(feature = "storage")]
+    {
+        if let Some(db) = &state.db {
+            crate::storage::queries::skills::delete(db, &slug)
+                .map_err(|e| AppError::Other(format!("DB error: {}", e)))?;
+            return Ok(());
+        }
+    }
+    let _ = (state, slug);
+    Ok(())
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -348,4 +472,63 @@ fn default_backup_path() -> AppResult<PathBuf> {
         .map(|d| d.as_secs())
         .unwrap_or(0);
     Ok(downloads.join(format!("clawheart-skills-backup-{}.zip", ts)))
+}
+
+fn skill_to_item(s: crate::storage::models::Skill) -> SkillListItem {
+    SkillListItem {
+        id: s.id,
+        slug: s.slug,
+        name: s.name,
+        description: s.description,
+        version: s.version,
+        safety_label: s.safety_label,
+        scan_score: s.scan_score.clamp(0, 100) as u32,
+        user_enabled: s.user_enabled,
+        system_status: s.system_status,
+        install_path: s.install_path,
+        metadata: s.metadata,
+        installed_at: s.installed_at,
+        updated_at: s.updated_at,
+    }
+}
+
+fn clean_opt(v: Option<String>) -> Option<String> {
+    v.map(|s| s.trim().to_string()).filter(|s| !s.is_empty())
+}
+
+fn validate_admin_skill(input: &AdminSkillInput) -> AppResult<()> {
+    let slug = input.slug.trim();
+    if slug.is_empty() {
+        return Err(AppError::Other("slug 不能为空".into()));
+    }
+    if slug.len() > 120
+        || !slug
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | '/' | '@'))
+    {
+        return Err(AppError::Other("slug 只能包含字母、数字、-、_、.、/、@，且不超过 120 字符".into()));
+    }
+    if input.name.trim().is_empty() {
+        return Err(AppError::Other("名称不能为空".into()));
+    }
+    if let Some(score) = input.scan_score {
+        if !(0..=100).contains(&score) {
+            return Err(AppError::Other("评分必须在 0-100 之间".into()));
+        }
+    }
+    Ok(())
+}
+
+fn validate_safety_label(label: &str) -> AppResult<()> {
+    match label {
+        "safe" | "warn" | "disabled" | "unaudited" => Ok(()),
+        _ => Err(AppError::Other("safety_label 必须是 safe/warn/disabled/unaudited".into())),
+    }
+}
+
+fn validate_system_status(status: &str) -> AppResult<()> {
+    match status {
+        "available" | "deprecated" | "removed" => Ok(()),
+        _ => Err(AppError::Other("system_status 必须是 available/deprecated/removed".into())),
+    }
 }

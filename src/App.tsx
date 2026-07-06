@@ -66,7 +66,7 @@ function App() {
           <Route path="/tools/access_mode" element={<ToolLayout title="监控模式"><AccessModeTool /></ToolLayout>} />
           <Route path="/tools/monitor" element={<ToolLayout title="实时监控" tabs={["实时流", "拦截记录", "Token 用量", "预算"]}><MonitorTool /></ToolLayout>} />
           <Route path="/tools/scan" element={<ToolLayout title="安全扫描"><ScanTool /></ToolLayout>} />
-          <Route path="/tools/skills" element={<ToolLayout title="技能管理" tabs={["本机技能", "扫描报告", "备份历史"]}><SkillsBackupTool /></ToolLayout>} />
+          <Route path="/tools/skills" element={<ToolLayout title="技能管理" tabs={["本机技能", "扫描报告", "备份历史", "商店维护"]}><SkillsBackupTool /></ToolLayout>} />
           <Route path="/tools/advisory" element={<ToolLayout title="安全公告"><AdvisoryTool /></ToolLayout>} />
           <Route path="/tools/logs" element={<ToolLayout title="请求日志"><LogsTool /></ToolLayout>} />
           <Route path="/tools/budget" element={<ToolLayout title="预算"><BudgetTool /></ToolLayout>} />

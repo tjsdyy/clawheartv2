@@ -21,12 +21,19 @@ async function openSkillBackupDir() {
 }
 
 export interface SkillItem {
+  id?: number;
   slug: string;
   name: string;
   description: string | null;
+  version?: string | null;
   safety_label: "safe" | "warn" | "disabled" | "unaudited";
   scan_score: number;
   user_enabled: boolean;
+  system_status?: "available" | "deprecated" | "removed";
+  install_path?: string | null;
+  metadata?: string | null;
+  installed_at?: string;
+  updated_at?: string;
   stars: number | null;
 }
 
@@ -82,6 +89,107 @@ export function useToggleSkill() {
       toast.success(enabled ? "已启用" : "已禁用");
     },
     onError: (err) => toast.error(`操作失败：${err}`),
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Admin：Skill 商店元数据维护
+// ──────────────────────────────────────────────────────────────────
+
+export interface AdminSkill {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  version: string | null;
+  safety_label: "safe" | "warn" | "disabled" | "unaudited";
+  scan_score: number;
+  user_enabled: boolean;
+  system_status: "available" | "deprecated" | "removed";
+  install_path: string | null;
+  metadata: string | null;
+  installed_at: string;
+  updated_at: string;
+}
+
+export interface AdminSkillInput {
+  slug: string;
+  name: string;
+  description?: string | null;
+  version?: string | null;
+  system_status?: "available" | "deprecated" | "removed";
+  user_enabled?: boolean;
+  safety_label?: "safe" | "warn" | "disabled" | "unaudited";
+  scan_score?: number;
+  install_path?: string | null;
+  metadata?: string | null;
+}
+
+const MOCK_ADMIN_SKILLS: AdminSkill[] = MOCK.map((s, index) => ({
+  id: index + 1,
+  slug: s.slug,
+  name: s.name,
+  description: s.description,
+  version: "0.1.0",
+  safety_label: s.safety_label,
+  scan_score: s.scan_score,
+  user_enabled: s.user_enabled,
+  system_status: "available",
+  install_path: `https://github.com/example/${s.slug.replace(/^@/, "").replace("/", "-")}`,
+  metadata: JSON.stringify({ category: "office", tags: ["demo", "skill"] }, null, 2),
+  installed_at: "2026-07-06 15:00:00",
+  updated_at: "2026-07-06 15:00:00",
+}));
+
+export function useAdminSkills() {
+  return useQuery({
+    queryKey: ["admin_skills"],
+    queryFn: async () =>
+      inTauri ? invoke<AdminSkill[]>("admin_list_skills") : MOCK_ADMIN_SKILLS,
+    staleTime: 15_000,
+  });
+}
+
+export function useAdminUpsertSkill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: AdminSkillInput) =>
+      inTauri
+        ? invoke<AdminSkill>("admin_upsert_skill", { input })
+        : ({ id: Date.now(), installed_at: "", updated_at: "", ...input } as AdminSkill),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin_skills"] });
+      qc.invalidateQueries({ queryKey: ["skills"] });
+      toast.success("Skill 已保存");
+    },
+    onError: (err) => toast.error(`保存失败：${err}`),
+  });
+}
+
+export function useAdminDeleteSkill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (slug: string) =>
+      inTauri ? invoke<void>("admin_delete_skill", { slug }) : Promise.resolve(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin_skills"] });
+      qc.invalidateQueries({ queryKey: ["skills"] });
+      toast.success("Skill 已删除");
+    },
+    onError: (err) => toast.error(`删除失败：${err}`),
+  });
+}
+
+export function useAdminScanSkill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (slug: string) =>
+      inTauri ? invoke<{ score: number; blocked: boolean; risk_level?: string }>("scan_skill", { slug }) : Promise.resolve({ score: 92, blocked: false, risk_level: "safe" }),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ["admin_skills"] });
+      toast.success(`扫描完成：${result.score} 分`);
+    },
+    onError: (err) => toast.error(`扫描失败：${err}`),
   });
 }
 

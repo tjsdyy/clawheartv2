@@ -21,6 +21,7 @@ pub struct Skill {
     pub safety_label: String,
     pub scan_score: i32,
     pub install_path: Option<String>,
+    pub metadata: Option<String>,
     pub installed_at: String,
     pub updated_at: String,
 }
