@@ -33,7 +33,7 @@ zip = { version = "2.2", default-features = false, features = ["deflate"] }
 rusqlite = { version = "0.32", features = ["bundled"], optional = true }
 keyring = { version = "3.0", optional = true }
 sysinfo = { version = "0.32", optional = true }
-notify = { version = "7.0", optional = true }
+notify = { version = "8.2", optional = true }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"], optional = true }
 ed25519-dalek = { version = "2.1", optional = true }
 hudsucker = { version = "0.22", optional = true }
